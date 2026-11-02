@@ -60,3 +60,11 @@ Camera mais proxima, acompanhando a posicao do jogador com orientacao constante.
 Previas room e encounter usam exatamente Game.draw e a camera de jogo. Encounter posiciona os atores numa situacao de encontro para avaliar legibilidade. O indicador PC TRI identifica uma reconstrucao local e nao um FPS medido no aparelho. Nao usar o antigo mask-detail como evidencia da qualidade durante o jogo.
 
 A varredura de posicoes e orientacoes verificou silhueta do jogador com pelo menos 45 pixels de altura, coordenadas nativas validas, ausencia de overflow e pico de 180 triangulos. Isso nao mede FPS. No ultimo relato anterior a esta versao, a foto do aparelho mostrava 19 FPS. O enquadramento proximo aumenta a area rasterizada, mesmo sem aumentar a malha; medir novamente no console. Mantidos os controles e o piso separado.
+
+## Versao 0.5 - diagnostico da divergencia no aparelho
+
+O video do console mostrou cores bem mais claras que as reconstrucoes locais; nao foi estabelecida a causa. Nenhuma promessa de equivalencia visual ou correcao de cores nesta versao. Sem aumentar geometria, camera ou complexidade de cena.
+
+X abre/fecha um painel e pausa a simulacao. Sao tres linhas independentes de codificacao: BGR555, RGB555 e RGB565. Cada linha tem cinzas 16/64/128/192, vermelho/verde/azul e branco. Em cada coluna, retangulo acima e os mesmos limites preenchidos por dois triangulos abaixo, usando exatamente o mesmo indice de paleta. Isso ajuda a distinguir problema de formato de cor de uma divergencia entre primitivas nativas. O teste nao seleciona um formato automaticamente; a foto do aparelho e necessaria para concluir. Usa slots 32 a 55 apenas durante o teste; os 32 slots do jogo sao preservados.
+
+A previa anterior foi reconstruida por System.Drawing a partir dos comandos Lua, e nao executada no firmware. Portanto nao valida cores nem rasterizacao do console. O resultado real do video e a referencia para avaliar qualidade.

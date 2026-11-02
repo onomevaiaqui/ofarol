@@ -2,6 +2,7 @@ local G=require "geometry"
 local R=require "renderer"
 local C=require "colors"
 local Models=require "models"
+local Diagnostic=require "diagnostic"
 Game={state="menu",fps=60}
 local camera={x=4,y=5.2,z=-7,yaw=-math.atan(4,7),pitch=-math.atan(4.4/math.sqrt(65))}
 local scene={}
@@ -57,8 +58,10 @@ function Game.step(dt)
         if ok and type(n)=="number" and n==n and n>=1 and n<=240 then Game.fps=n end
     end
     dt=math.max(0,math.min(dt or 1/Game.fps,0.125))
-    local now={up=held(UP),down=held(DOWN),left=held(LEFT),right=held(RIGHT),run=held(BTN_Z),act=held(BTN_G),fire=held(BTN_E),reset=held(BTN_F)}
+    local now={up=held(UP),down=held(DOWN),left=held(LEFT),right=held(RIGHT),run=held(BTN_Z),act=held(BTN_G),fire=held(BTN_E),reset=held(BTN_F),test=held(BTN_X)}
     local function pressed(k) return now[k] and not previous[k] end
+    if pressed("test") then Game.colorTest=not Game.colorTest end
+    if Game.colorTest then previous=now;return end
     if Game.state~="play" then
         if pressed("run") or pressed("reset") then Game.start() end
     elseif pressed("reset") then Game.start()
@@ -108,13 +111,14 @@ local function text(s,x,y,c) ui.print(s,x,y,C.index[c or 9]) end
 local function rect(x,y,w,h,c) ui.rectfill(x,y,x+w,y+h,C.index[c]) end
 function Game.draw()
     C.register();rect(0,0,479,269,10)
+    if Game.colorTest then Diagnostic.draw();return end
     if Game.state=="menu" then
-        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.4",105,80,9)
+        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.5",105,80,9)
         text("UM DEPOSITO. UMA CHAVE. UMA CHANCE.",105,113,5)
         text("CRUZ: ANDAR / GIRAR    B: CORRER",111,145,9)
         text("A: INTERAGIR    R: DISPARAR    Y: REINICIAR",77,164,9)
         text("B: INICIAR",203,200,15)
-        text("AUDIO AINDA NAO VALIDADO NO CONSOLE",106,239,11)
+        text("X: TESTE DE CORES / AUDIO NAO VALIDADO",106,239,11)
         return
     end
     -- Fixed orientation, closer framing follows position rather than heading.
@@ -133,7 +137,7 @@ function Game.draw()
     text("VIDA "..Game.health.."  TIROS "..Game.ammo.."  CHAVE "..(Game.key and "SIM" or "NAO"),8,5,9)
     text("FPS "..math.floor(Game.fps).." TRI "..R.triangles,340,5,5)
     if Game.timer>0 then text(Game.message,12,237,15) end
-    text("A INTERAGIR  R TIRO  B CORRER  Y REINICIAR",12,255,11)
+    text("A INTERAGIR  R TIRO  B CORRER  Y REINICIAR  X CORES",12,255,11)
     if Game.flash>0 then rect(232,117,16,8,15) end
     if Game.stun>0 then text("ATORDOADO",200,26,8) end
     if Game.state=="win" or Game.state=="dead" then
@@ -142,6 +146,7 @@ function Game.draw()
         text("B OU Y: TENTAR NOVAMENTE",141,138,9)
     end
 end
+
 
 
 
