@@ -1,14 +1,16 @@
 -- Real itch.io meshes converted offline. No FBX/GLB loader runs on the console.
 local Data=require "asset_meshes"
-local M={}
-function M.prop(name) return Data[name] end
+local Full=require "asset_meshes_full"
+local M={original=true}
+function M.prop(name) return (M.original and Full or Data)[name] end
 function M.actor(infected)
-    local source=Data[infected and "enemy" or "player"]
+    local source=(M.original and Full or Data)[infected and "enemy" or "player"]
     local mesh={v={},f=source.f};local bind={}
     for i,x in ipairs(source.v) do mesh.v[i]=x;bind[i]=x end
     return {mesh=mesh,bind=bind,groups=source.groups,phase=0,infected=infected,angles={},cs={},sn={}}
 end
 function M.animate(rig,distance,stunned)
+    if M.original then return end
     rig.phase=rig.phase+distance*7
     local swing=distance>0 and math.sin(rig.phase)*0.40 or 0
     local angles=rig.angles;angles[1],angles[2],angles[3],angles[4]=swing,-swing,-swing,swing
@@ -32,4 +34,5 @@ function M.animate(rig,distance,stunned)
     if minimum<0 then for i=2,#rig.mesh.v,3 do rig.mesh.v[i]=rig.mesh.v[i]-minimum end end
 end
 return M
+
 

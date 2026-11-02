@@ -3,6 +3,7 @@ local R=require "renderer"
 local C=require "colors"
 local Models=require "models"
 local Diagnostic=require "diagnostic"
+local Audio=require "audio"
 Game={state="menu",fps=60}
 local camera={x=4,y=5.2,z=-7,yaw=-math.atan(4,7),pitch=-math.atan(4.4/math.sqrt(65))}
 local scene={}
@@ -24,6 +25,12 @@ local playerRig=Models.actor(false)
 local enemyRig=Models.actor(true)
 local player=object(playerRig.mesh)
 local enemy=object(enemyRig.mesh)
+function Game.setOriginal(value)
+    Models.original=value
+    playerRig,enemyRig=Models.actor(false),Models.actor(true)
+    player.mesh,enemy.mesh=playerRig.mesh,enemyRig.mesh
+    for i,b in ipairs(obstacles) do scene[i+3].mesh=Models.prop(b.model) end
+end
 local previous={}
 local tick=0
 local function held(k)
@@ -58,8 +65,10 @@ function Game.step(dt)
         if ok and type(n)=="number" and n==n and n>=1 and n<=240 then Game.fps=n end
     end
     dt=math.max(0,math.min(dt or 1/Game.fps,0.125))
-    local now={up=held(UP),down=held(DOWN),left=held(LEFT),right=held(RIGHT),run=held(BTN_Z),act=held(BTN_G),fire=held(BTN_E),reset=held(BTN_F),test=held(BTN_X)}
+    Audio.scene(Game.state);Audio.update(dt)
+    local now={up=held(UP),down=held(DOWN),left=held(LEFT),right=held(RIGHT),run=held(BTN_Z),act=held(BTN_G),fire=held(BTN_E),reset=held(BTN_F),test=held(BTN_X),detail=held(BTN_Q)}
     local function pressed(k) return now[k] and not previous[k] end
+    if pressed("detail") then Game.setOriginal(not Models.original) end
     if pressed("test") then Game.colorTest=not Game.colorTest end
     if Game.colorTest then previous=now;return end
     if Game.state~="play" then
@@ -73,14 +82,14 @@ function Game.step(dt)
         local walked=move(player,math.sin(player.yaw)*amount,math.cos(player.yaw)*amount)
         Models.animate(playerRig,walked)
         if pressed("act") then
-            if not Game.key and dist(player,key)<1.1 then Game.key=true;message("CHAVE ENCONTRADA - PROCURE A PORTA VERDE")
+            if not Game.key and dist(player,key)<1.1 then Game.key=true;Audio.event("pickup");message("CHAVE ENCONTRADA - PROCURE A PORTA VERDE")
             elseif dist(player,door)<1.2 then
-                if Game.key then Game.state="win" else message("PORTA TRANCADA - PRECISA DE CHAVE") end
+                if Game.key then Game.state="win";Audio.event("win") else message("PORTA TRANCADA - PRECISA DE CHAVE") end
             else message("NADA AO ALCANCE") end
         end
         if pressed("fire") then
             if Game.ammo>0 then
-                Game.ammo=Game.ammo-1;Game.flash=0.12
+                Game.ammo=Game.ammo-1;Game.flash=0.12;Audio.event("shot")
                 local d=dist(player,enemy)
                 local dot=(enemy.x-player.x)*math.sin(player.yaw)+(enemy.z-player.z)*math.cos(player.yaw)
                 -- Line of sight: crates stop both the enemy and the shot.
@@ -101,8 +110,8 @@ function Game.step(dt)
         end
         Models.animate(enemyRig,math.sqrt((enemy.x-ex)^2+(enemy.z-ez)^2),Game.stun>0)
         if d<0.62 and Game.stun==0 and Game.invulnerable==0 then
-            Game.health=Game.health-1;Game.invulnerable=1.8;message("FERIDO! AFASTE-SE")
-            if Game.health<=0 then Game.state="dead" end
+            Game.health=Game.health-1;Audio.event("hit");Game.invulnerable=1.8;message("FERIDO! AFASTE-SE")
+            if Game.health<=0 then Game.state="dead";Audio.event("lose") end
         end
     end
     previous=now
@@ -111,14 +120,15 @@ local function text(s,x,y,c) ui.print(s,x,y,C.index[c or 9]) end
 local function rect(x,y,w,h,c) ui.rectfill(x,y,x+w,y+h,C.index[c]) end
 function Game.draw()
     C.register();rect(0,0,479,269,10)
-    if Game.colorTest then Diagnostic.draw();return end
+    if Game.colorTest then Diagnostic.draw();text("SOM: "..Audio.status,12,258,9);return end
     if Game.state=="menu" then
-        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.6",105,80,9)
+        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.7",105,80,9)
         text("UM DEPOSITO. UMA CHAVE. UMA CHANCE.",105,113,5)
         text("CRUZ: ANDAR / GIRAR    B: CORRER",111,145,9)
         text("A: INTERAGIR    R: DISPARAR    Y: REINICIAR",77,164,9)
         text("B: INICIAR",203,200,15)
-        text("X: TESTE DE CORES / AUDIO NAO VALIDADO",106,239,11)
+        text("X: CORES / L: ORIGINAL OU LEVE",106,231,11)
+        text("SOM: "..Audio.status,65,248,11)
         return
     end
     -- Fixed orientation, closer framing follows position rather than heading.
@@ -135,9 +145,10 @@ function Game.draw()
     Game.triangles=R.triangles
     rect(0,0,479,19,0);rect(0,228,479,41,0)
     text("VIDA "..Game.health.."  TIROS "..Game.ammo.."  CHAVE "..(Game.key and "SIM" or "NAO"),8,5,9)
+    text(Models.original and "ORIGINAL" or "LEVE",266,5,5)
     text("FPS "..math.floor(Game.fps).." TRI "..R.triangles,340,5,5)
     if Game.timer>0 then text(Game.message,12,237,15) end
-    text("A INTERAGIR  R TIRO  B CORRER  Y REINICIAR  X CORES",12,255,11)
+    text("A INTERAGIR  R TIRO  B CORRER  Y REINICIAR  X CORES  L DETALHE",12,255,11)
     if Game.flash>0 then rect(232,117,16,8,15) end
     if Game.stun>0 then text("ATORDOADO",200,26,8) end
     if Game.state=="win" or Game.state=="dead" then
@@ -146,6 +157,8 @@ function Game.draw()
         text("B OU Y: TENTAR NOVAMENTE",141,138,9)
     end
 end
+
+
 
 
 

@@ -8,6 +8,12 @@ for shade=0,1 do for _,c in ipairs(rgb) do
     M.palette[#M.palette+1]=b*1024+g*32+r
     M.index[#M.palette-1]=#M.palette-1
 end end
+-- Extra neutral bone/wood shades sampled for faithful source face colours.
+local extra={{40,36,24},{60,56,44},{80,76,60},{104,100,80},{128,124,100},{152,148,124},{176,172,144},{208,204,172},{24,16,8},{48,32,16},{72,48,24},{96,64,32},{120,88,48},{144,112,72},{184,152,104},{216,188,144}}
+for _,c in ipairs(extra) do
+    local r,g,b=math.floor(c[1]/8),math.floor(c[2]/8),math.floor(c[3]/8)
+    M.palette[#M.palette+1]=b*1024+g*32+r;M.index[#M.palette-1]=#M.palette-1
+end
 function M.register()
     for i,c in ipairs(M.palette) do
         if cfg.platform=="hardware" then c=(c%32)*1024+(math.floor(c/32)%32)*32+math.floor(c/1024)%32 end
@@ -15,4 +21,5 @@ function M.register()
     end
 end
 return M
+
 

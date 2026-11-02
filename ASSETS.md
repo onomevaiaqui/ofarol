@@ -27,3 +27,11 @@ Cores dos personagens atribuidas por regiao anatomica; cores dos moveis amostrad
 A caminhada usa os vertices das malhas importadas com agrupamento simplificado de bracos/pernas; nao e uma reproducao das animacoes dos packs nem um sistema completo de cotovelos/joelhos. Buffers de vertices e trigonometria sao reutilizados. Pose elevada quando necessario para evitar penetracao dos pes.
 
 Os arquivos brutos ficam fora do pacote executavel. asset_meshes.lua tem aproximadamente 12 KB em disco; tamanho em RAM e desempenho no console nao podem ser inferidos desse tamanho. O runtime nao depende de Blender, Python, ufbx, meshoptimizer ou carregadores FBX/GLB.
+
+## Comparacao 0.7
+
+asset_meshes_full.lua preserva todas as faces de origem: humano 402, esqueleto 1762, escrivaninha 161, cadeira 330, armario 150. As contagens reduzidas da tabela acima continuam disponiveis em asset_meshes.lua no modo LEVE (L). O modo ORIGINAL e o padrao e usa a pose de origem sem a deformacao de membros da 0.6. O humano e cinza neutro; nao tem a camisa azul inventada da adaptacao anterior. Cores do esqueleto amostradas nos UVs do base.png original; cores dos moveis amostradas no centro UV de cada triangulo, sem misturar amostras dos vertices nas bordas do atlas. A paleta foi ampliada a 48 entradas para evitar substituir tons de osso por verde.
+
+Texturas nao sao aplicadas por pixel: cada triangulo recebe uma cor. Portanto a geometria e integral, mas o visual nao equivale a um renderizador com texturas e iluminacao original.
+
+Os sete arquivos .fur e o gerador tools/build-audio.cjs sao composicoes/efeitos procedurais originais deste projeto, derivados do gerador proprio da corrida; nao sao musicas ou samples copiados dos packs nem de jogos oficiais.

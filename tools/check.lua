@@ -5,7 +5,7 @@ function require(name)
     if cache[name] then return cache[name] end
     local f=assert(loadfile(root.."/"..name..".lua"));local v=f();cache[name]=v or true;return cache[name]
 end
-UP,DOWN,LEFT,RIGHT,BTN_Z,BTN_G,BTN_E,BTN_F,BTN_X=1,2,3,4,5,6,7,8,9
+UP,DOWN,LEFT,RIGHT,BTN_Z,BTN_G,BTN_E,BTN_F,BTN_X,BTN_Q=1,2,3,4,5,6,7,8,9,10
 local buttons={};local output,palette
 local count=0
 ui={btn=function(k) return buttons[k] or 0 end,stat=function() return 24 end,
@@ -34,7 +34,7 @@ local function snapshot(name,draw)
     output=assert(open(root.."/tools/"..name..".csv","w"));palette=assert(open(root.."/tools/palette.csv","w"))
     local callback=draw or Game.draw;callback();output:close();palette:close();output=nil;palette=nil
 end
-snapshot("menu");tap(BTN_X);assert(Game.colorTest);snapshot("color-test");tap(BTN_X);assert(not Game.colorTest);tap(BTN_Z);assert(Game.state=="play")
+snapshot("menu");tap(BTN_Q);assert(#player.mesh.f/4==180);tap(BTN_Q);assert(#player.mesh.f/4==402);tap(BTN_X);assert(Game.colorTest);snapshot("color-test");tap(BTN_X);assert(not Game.colorTest);tap(BTN_Z);assert(Game.state=="play")
 snapshot("room")
 -- This is the normal gameplay camera; only actor positions set for the scene.
 player.x,player.z=0,-0.8;enemy.x,enemy.z=1,1.8
@@ -47,7 +47,8 @@ Game.start();player.x,player.z=0,-2
 local before={};for i,v in ipairs(player.mesh.v) do before[i]=v end
 buttons[UP]=1;Game.step(1/24);buttons={}
 local changed=false;for i,v in ipairs(player.mesh.v) do if before[i]~=v then changed=true end end
-assert(changed,"walk must deform limbs")
+assert(not changed,"original mesh must not be deformed")
+Game.setOriginal(false);local original=player.mesh.v[1];buttons[UP]=1;Game.step(1/24);buttons={};assert(#player.mesh.f/4==180);Game.setOriginal(true);assert(#player.mesh.f/4==402)
 snapshot("walking")
 local renderer=require "renderer"
 local rawSubmit,rawFlush=renderer.submit,renderer.flush
@@ -89,6 +90,8 @@ snapshot("mask-detail",function()
 end)
 print("PASS: restricted loader, clipping, winding, rotation, key, exit, stun, damage, restart, collision")
 print("Peak native triangles in sampled fixed view: "..max)
+
+
 
 
 
