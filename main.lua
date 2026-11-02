@@ -6,7 +6,7 @@ local Diagnostic=require "diagnostic"
 Game={state="menu",fps=60}
 local camera={x=4,y=5.2,z=-7,yaw=-math.atan(4,7),pitch=-math.atan(4.4/math.sqrt(65))}
 local scene={}
-local obstacles={{x=-2.3,z=0,w=1.3,d=2},{x=2.1,z=1.7,w=1.5,d=1.2}}
+local obstacles={{x=-2.3,z=0,w=1.7,d=0.6,model="desk"},{x=-2.3,z=-0.7,w=0.46,d=0.53,model="chair"},{x=2.1,z=1.7,w=0.9,d=0.44,model="cabinet"}}
 local function object(mesh,x,y,z) return {mesh=mesh,x=x or 0,y=y or 0,z=z or 0} end
 local function box(w,h,d,x,y,z,a,b,c)
     return object(G.box(w,h,d,a or 3,b or 2,c or 4),x,y,z)
@@ -17,7 +17,7 @@ for z=-5,4 do G.quad(floor,{-4,0,z},{-4,0,z+1},{4,0,z+1},{4,0,z},z%2==0 and 2 or
 scene[1]=object(floor)
 scene[#scene+1]=box(8,2.6,0.18,0,1.3,5.1,3,2,4)
 scene[#scene+1]=box(0.18,2.6,10,-4.1,1.3,0,3,2,4)
-for _,b in ipairs(obstacles) do scene[#scene+1]=object(Models.table(b.w,b.d),b.x,0,b.z) end
+for _,b in ipairs(obstacles) do scene[#scene+1]=object(Models.prop(b.model),b.x,0,b.z) end
 local door=box(1.3,2.1,0.13,2.5,1.05,4.95,14,2,14)
 local key=box(0.36,0.15,0.2,-2.7,0.35,3.5,8,13,15)
 local playerRig=Models.actor(false)
@@ -113,7 +113,7 @@ function Game.draw()
     C.register();rect(0,0,479,269,10)
     if Game.colorTest then Diagnostic.draw();return end
     if Game.state=="menu" then
-        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.5",105,80,9)
+        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.6",105,80,9)
         text("UM DEPOSITO. UMA CHAVE. UMA CHANCE.",105,113,5)
         text("CRUZ: ANDAR / GIRAR    B: CORRER",111,145,9)
         text("A: INTERAGIR    R: DISPARAR    Y: REINICIAR",77,164,9)
@@ -146,6 +146,7 @@ function Game.draw()
         text("B OU Y: TENTAR NOVAMENTE",141,138,9)
     end
 end
+
 
 
 

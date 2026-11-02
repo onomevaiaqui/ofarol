@@ -79,7 +79,7 @@ for i=1,3 do Game.invulnerable=0;enemy.x,enemy.z=player.x,player.z;Game.step(0.0
 assert(Game.state=="dead");tap(BTN_F);assert(Game.state=="play" and Game.health==3)
 Game.start();player.x,player.z=-2.3,-1.4;player.yaw=0;buttons[UP]=1
 for i=1,20 do Game.step(1/24) end
-assert(player.z<=-1.25,"crate collision")
+assert(player.z<=-1.21,"crate collision")
 buttons={};Game.start()
 snapshot("mask-detail",function()
     require("colors").register();ui.rectfill(0,0,479,269,10)
@@ -89,6 +89,7 @@ snapshot("mask-detail",function()
 end)
 print("PASS: restricted loader, clipping, winding, rotation, key, exit, stun, damage, restart, collision")
 print("Peak native triangles in sampled fixed view: "..max)
+
 
 
 

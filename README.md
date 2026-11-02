@@ -1,6 +1,6 @@
 # Ultima Saida - survival horror 3D para Lupi
 
-Prototipo 0.4 independente do jogo de corrida. Uma sala de deposito, um personagem, um inimigo, uma chave e uma porta de fuga. Camera obliqua mais proxima, com orientacao fixa e posicao acompanhando o jogador; malhas XYZ projetadas em perspectiva e rasterizadas com ui.trisfill. Sem raycasting 2,5D, texturas ou sombras dinamicas.
+Prototipo 0.6 independente do jogo de corrida. Uma sala de deposito, um personagem, um inimigo, uma chave e uma porta de fuga. Camera obliqua mais proxima, com orientacao fixa e posicao acompanhando o jogador; malhas XYZ projetadas em perspectiva e rasterizadas com ui.trisfill. Sem raycasting 2,5D, texturas ou sombras dinamicas.
 
 ## Como jogar
 
@@ -18,10 +18,10 @@ O ZIP de teste tem game.lua e lupi.yaml na raiz. Instale pelo mesmo fluxo de imp
 
 ## Limites e verificacao
 
-- Tela 480x270, paleta 32 cores BGR555, sem assets externos.
-- Malhas originais simples; renderer.lua, geometry.lua e colors.lua copiados da base de corrida sem modificar a origem.
-- 192 entradas no pool reutilizavel de triangulos; recorte proximo e na tela, backface culling, coordenadas inteiras e painter sort. Sem z-buffer.
-- Cena: 309 triangulos de entrada (incluindo chave e atores); pico amostrado: 180 triangulos nativos visiveis. O numero exibido e calculado por quadro.
+- Tela 480x270, paleta 32 cores BGR555; assets externos adaptados documentados em ASSETS.md.
+- Malhas importadas da itch.io; renderer.lua e geometry.lua derivados da base de corrida.
+- 320 entradas no pool reutilizavel de triangulos; recorte proximo e na tela, backface culling, coordenadas inteiras e painter sort. Sem z-buffer.
+- Cena: 521 triangulos de entrada (incluindo chave e atores); pico amostrado: 263 triangulos nativos visiveis. O numero exibido e calculado por quadro.
 - O teste no computador utiliza 24 FPS simulados apenas para dt. Esse valor NAO mede nem promete o FPS do aparelho. Medir no console antes de aumentar o cenario.
 - Sem dependencia de package, io, os, debug, collectgarbage, music ou sfx em tempo de execucao.
 - Sem save persistente nem audio nesta versao. O audio da corrida continua sem reproducao confirmada no hardware. Nenhuma descoberta permite prometer som neste prototipo.
@@ -68,3 +68,9 @@ O video do console mostrou cores bem mais claras que as reconstrucoes locais; na
 X abre/fecha um painel e pausa a simulacao. Sao tres linhas independentes de codificacao: BGR555, RGB555 e RGB565. Cada linha tem cinzas 16/64/128/192, vermelho/verde/azul e branco. Em cada coluna, retangulo acima e os mesmos limites preenchidos por dois triangulos abaixo, usando exatamente o mesmo indice de paleta. Isso ajuda a distinguir problema de formato de cor de uma divergencia entre primitivas nativas. O teste nao seleciona um formato automaticamente; a foto do aparelho e necessaria para concluir. Usa slots 32 a 55 apenas durante o teste; os 32 slots do jogo sao preservados.
 
 A previa anterior foi reconstruida por System.Drawing a partir dos comandos Lua, e nao executada no firmware. Portanto nao valida cores nem rasterizacao do console. O resultado real do video e a referencia para avaliar qualidade.
+
+## Versao 0.6 - primeira cena com assets da itch.io
+
+Jogador humano Comp-3, esqueleto Puck, escrivaninha, cadeira e armario mastjie. Creditos, licencas e contagens em ASSETS.md. Lowbit Lab substituido por Puck para manter os dados publicados com licenca CC0. Mantidos camera de jogo, controles, objetivo, diagnostico X e piso separado. Colisoes atualizadas para os novos moveis; o inimigo ainda usa perseguicao simples e pode ficar preso.
+
+Esta versao aumenta o pico local de 180 para 263 triangulos nativos; e um teste visual e NAO uma melhoria confirmada de desempenho. Nao promete manter os 19-20 FPS observados anteriormente no aparelho. A divergencia de cores continua sem diagnostico conclusivo; o painel X foi preservado. Previas locais feitas com a mesma camera do jogo, nao capturas do console.
