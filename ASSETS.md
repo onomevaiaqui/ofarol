@@ -35,3 +35,13 @@ asset_meshes_full.lua preserva todas as faces de origem: humano 402, esqueleto 1
 Texturas nao sao aplicadas por pixel: cada triangulo recebe uma cor. Portanto a geometria e integral, mas o visual nao equivale a um renderizador com texturas e iluminacao original.
 
 Os sete arquivos .fur e o gerador tools/build-audio.cjs sao composicoes/efeitos procedurais originais deste projeto, derivados do gerador proprio da corrida; nao sao musicas ou samples copiados dos packs nem de jogos oficiais.
+
+## Beco pre-renderizado 0.8
+
+Fonte: PSX style urban stacked pack, valsekamerplant: https://valsekamerplant.itch.io/psx-style-urban-stacked-pack . Pack principal gratuito, licenca CC0 declarada pelo autor; texturas CC0 ou fotografias proprias, sem IA generativa. Download do pack gratuito em 2 de novembro de 2026, sem comprar nem usar os arquivos-fonte pagos.
+
+Usados: road_4_straight_no_sides.glb, brick_wall_window_1.glb, brick_wall_window_2.glb, brick_wall.glb, brick_wall_metal_door.glb, dumpster_diagonal_closed.glb, street_light.glb e metalfence_both_sides_topbar.glb. As malhas e texturas foram importadas no Blender 4.2.0; cena montada e iluminada offline no Cycles. Conversao de GLTF para a cena, normalizacao de escala/origem, posicionamento, render de camera fixa, reducao a BGR555 e paleta compartilhada. Os moveis mastjie da versao anterior nao sao desenhados no beco.
+
+Arquivos de runtime: backgrounds/alley.png, backgrounds/dumpster.png e backgrounds/swatches.png. A mascara usa os mesmos pixels do render de fundo sob uma silhueta renderizada separadamente, evitando mudar a iluminacao da cacamba ao reaplica-la.
+
+Reproducao: com Blender 4.2/bpy e o pack extraido, defina URBAN_ASSETS para o diretorio URBAN e execute tools/render-alley.py. Os renders, a cena .blend com texturas empacotadas e os dados de camera ficam em .build/alley. tools/prepare-background.py usa Pillow e a paleta base salva em .build/alley/source-palette.txt para preparar os PNGs, background_layout.lua e background_palette.lua. A paleta base pode ser exportada com Lua usando C.source de colors.lua. tools/build-prerender.py gera os bitmaps e o manifesto nativo. Blender e as ferramentas offline nao sao carregados pelo Lupi.

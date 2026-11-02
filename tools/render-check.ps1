@@ -13,6 +13,11 @@ $font=New-Object System.Drawing.Font 'Consolas',7
 foreach($line in Get-Content "$PSScriptRoot/$Frame.csv") {
     $p=$line.Split(',')
     switch($p[0]) {
+        'spr' {
+            $file=Join-Path (Split-Path $PSScriptRoot -Parent) ($p[3]+'.png')
+            $sprite=[System.Drawing.Image]::FromFile($file)
+            $g.DrawImageUnscaled($sprite,[int]$p[1],[int]$p[2]);$sprite.Dispose()
+        }
         'tri' {
             $points=[System.Drawing.Point[]]@((New-Object System.Drawing.Point ([int]$p[1]),([int]$p[2])),(New-Object System.Drawing.Point ([int]$p[3]),([int]$p[4])),(New-Object System.Drawing.Point ([int]$p[5]),([int]$p[6])))
             $g.FillPolygon($brushes[$p[7]],$points)
@@ -25,3 +30,4 @@ $output=if($Frame -eq 'frame') { 'preview' } else { $Frame }
 $image.Save("$PSScriptRoot/$output.png",[System.Drawing.Imaging.ImageFormat]::Png)
 $font.Dispose(); $g.Dispose(); $image.Dispose()
 foreach($brush in $brushes.Values) { $brush.Dispose() }
+

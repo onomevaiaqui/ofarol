@@ -14,6 +14,23 @@ for _,c in ipairs(extra) do
     local r,g,b=math.floor(c[1]/8),math.floor(c[2]/8),math.floor(c[3]/8)
     M.palette[#M.palette+1]=b*1024+g*32+r;M.index[#M.palette-1]=#M.palette-1
 end
+-- Remap actor colour IDs to the palette actually assigned to PNG assets.
+M.source=M.palette
+pcall(require,"palette")
+local target=type(Palette)=="table" and type(Palette[1])=="number" and Palette or require "background_palette"
+local lookup={};for i,c in ipairs(target) do lookup[c]=i-1 end
+for id,c in ipairs(M.source) do
+    local mapped=lookup[c]
+    if mapped==nil then
+        local best=math.huge
+        for i,v in ipairs(target) do
+            local r=(c%32)-(v%32);local g=(math.floor(c/32)%32)-(math.floor(v/32)%32);local b=math.floor(c/1024)-math.floor(v/1024)
+            local d=r*r+g*g+b*b;if d<best then best=d;mapped=i-1 end
+        end
+    end
+    M.index[id-1]=mapped
+end
+M.palette=target
 function M.register()
     for i,c in ipairs(M.palette) do
         if cfg.platform=="hardware" then c=(c%32)*1024+(math.floor(c/32)%32)*32+math.floor(c/1024)%32 end
@@ -21,5 +38,6 @@ function M.register()
     end
 end
 return M
+
 
 

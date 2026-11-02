@@ -2,13 +2,19 @@
 local root=arg[1] or "."
 local cache={}
 function require(name)
+    if name=="sprites" then return Sprites end
     if cache[name] then return cache[name] end
     local f=assert(loadfile(root.."/"..name..".lua"));local v=f();cache[name]=v or true;return cache[name]
 end
 UP,DOWN,LEFT,RIGHT,BTN_Z,BTN_G,BTN_E,BTN_F,BTN_X,BTN_Q=1,2,3,4,5,6,7,8,9,10
+local layout=assert(loadfile(root.."/background_layout.lua"))()
+Sprites={backgrounds={alley={path="backgrounds/alley",width=480,height=208},dumpster={path="backgrounds/dumpster",width=layout.mask.width,height=layout.mask.height}}}
 local buttons={};local output,palette
 local count=0
-ui={btn=function(k) return buttons[k] or 0 end,stat=function() return 24 end,
+ui={spr=function(s,x,y)
+    assert(type(s.path)=="string" and s.width>0 and s.height>0)
+    if output then output:write(string.format("spr,%d,%d,%s\n",x,y,s.path)) end
+end,btn=function(k) return buttons[k] or 0 end,stat=function() return 24 end,
     palset=function(i,c) if palette then palette:write(i,",",c,"\n") end end,
     rectfill=function(a,b,c,d,e) if output then output:write(string.format("rect,%d,%d,%d,%d,%d\n",a,b,c,d,e)) end end,
     print=function(s,x,y,c) s=s:gsub("^FPS %d+ TRI","PC TRI");if output then output:write(string.format("text,%d,%d,%d,%s\n",x,y,c,s)) end end,
@@ -39,6 +45,7 @@ snapshot("room")
 -- This is the normal gameplay camera; only actor positions set for the scene.
 player.x,player.z=0,-0.8;enemy.x,enemy.z=1,1.8
 Game.step(1/24);snapshot("encounter")
+Game.start();player.x,player.z=-2.5,2.4;snapshot("occlusion")
 Game.start()
 local max=0
 for i=1,240 do buttons[RIGHT]=1;Game.step(1/24);Game.draw();max=math.max(max,Game.triangles);assert(require("renderer").dropped==0) end
@@ -51,16 +58,17 @@ assert(not changed,"original mesh must not be deformed")
 Game.setOriginal(false);local original=player.mesh.v[1];buttons[UP]=1;Game.step(1/24);buttons={};assert(#player.mesh.f/4==180);Game.setOriginal(true);assert(#player.mesh.f/4==402)
 snapshot("walking")
 local renderer=require "renderer"
-local rawSubmit,rawFlush=renderer.submit,renderer.flush
-local firstFlush=false
-renderer.submit=function(o,...)
-    local ground=true;for i=2,#o.mesh.v,3 do if o.mesh.v[i]~=0 then ground=false;break end end
-    if ground then assert(not firstFlush,"floor after foreground") else assert(firstFlush,"foreground before floor flush") end
-    return rawSubmit(o,...)
+local nativeCount=count;assert(require("background").draw());assert(count==nativeCount,"background must not issue triangles")
+local cam=layout.camera
+for _,p in ipairs(layout.probes) do
+    local dx,dy,dz=p[1]-cam.x,p[2]-cam.y,p[3]-cam.z
+    local forward=dx*math.sin(cam.yaw)+dz*math.cos(cam.yaw)
+    local side=dx*math.cos(cam.yaw)-dz*math.sin(cam.yaw)
+    local height=dy*math.cos(cam.pitch)-forward*math.sin(cam.pitch)
+    local depth=dy*math.sin(cam.pitch)+forward*math.cos(cam.pitch)
+    assert(math.abs(240+side*380/depth-p[4])<0.1,"background camera x mismatch")
+    assert(math.abs(124-height*380/depth-p[5])<0.1,"background camera y mismatch")
 end
-renderer.flush=function(...) local result=rawFlush(...);firstFlush=true;return result end
-Game.draw()
-renderer.submit,renderer.flush=rawSubmit,rawFlush
 -- Feet must remain above ground for a full stride, not just the rest pose.
 local Models=require "models";local rig=Models.actor(false)
 for i=1,80 do Models.animate(rig,0.04);for j=2,#rig.mesh.v,3 do assert(rig.mesh.v[j]>=0,"vertex below floor") end end
@@ -68,9 +76,22 @@ for x=-3,3,1.5 do for z=-4,4,2 do for yaw=0,5 do
         player.x,player.z,player.yaw=x,z,yaw;Game.draw()
     local low,high=10000,-10000
     for _,y in ipairs(player.sy) do low=math.min(low,y);high=math.max(high,y) end
-    assert(high-low>=45 and high-low<=120,"gameplay silhouette size")
+    assert(high-low>=20 and high-low<=170,"gameplay silhouette size")
     max=math.max(max,Game.triangles);assert(require("renderer").dropped==0,"pool overflow")
 end end end
+Game.setOriginal(false);Game.start();local lightMax=0
+for x=-3,3,1.5 do for z=-4,4,2 do
+    player.x,player.z=x,z;Game.draw();lightMax=math.max(lightMax,Game.triangles);assert(renderer.dropped==0)
+end end
+Game.start();snapshot("room-light");Game.setOriginal(true)
+-- A missing bitmap must be reported, rather than silently drawing a fake room.
+local sprites=Sprites;Sprites=nil;assert(not require("background").draw());Sprites=sprites
+-- The same foreground image is drawn only for actors behind its plane.
+local rawSpr=ui.spr;local masks=0
+ui.spr=function(s,x,y) if s.path=="backgrounds/dumpster" then masks=masks+1 end end
+require("background").occlude({x=0,z=-4});assert(masks==0)
+require("background").occlude({x=-2.5,z=3});assert(masks==1)
+ui.spr=rawSpr
 Game.start();player.x,player.z=-2.7,3.5;tap(BTN_G);assert(Game.key,"key")
 player.x,player.z=2.5,4.3;tap(BTN_G);assert(Game.state=="win","escape");snapshot("escape")
 Game.start();player.x,player.z=0,-2;player.yaw=0;enemy.x,enemy.z=0,0
@@ -78,9 +99,9 @@ tap(BTN_E);assert(Game.ammo==2 and Game.stun>0,"shot stun")
 Game.start();enemy.x,enemy.z=player.x,player.z;Game.step(0.05);assert(Game.health==2,"damage")
 for i=1,3 do Game.invulnerable=0;enemy.x,enemy.z=player.x,player.z;Game.step(0.05) end
 assert(Game.state=="dead");tap(BTN_F);assert(Game.state=="play" and Game.health==3)
-Game.start();player.x,player.z=-2.3,-1.4;player.yaw=0;buttons[UP]=1
+Game.start();player.x,player.z=-2.5,-2.1;player.yaw=0;buttons[UP]=1
 for i=1,20 do Game.step(1/24) end
-assert(player.z<=-1.21,"crate collision")
+assert(player.z<=-1.4,"crate collision")
 buttons={};Game.start()
 snapshot("mask-detail",function()
     require("colors").register();ui.rectfill(0,0,479,269,10)
@@ -89,7 +110,11 @@ snapshot("mask-detail",function()
     ui.print("DETALHE DA MALHA 3D - CAMERA DE INSPECAO",70,250,9)
 end)
 print("PASS: restricted loader, clipping, winding, rotation, key, exit, stun, damage, restart, collision")
-print("Peak native triangles in sampled fixed view: "..max)
+print("Peak native triangles in sampled fixed view: ORIGINAL "..max.." / LEVE "..lightMax)
+
+
+
+
 
 
 

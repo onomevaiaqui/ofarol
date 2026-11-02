@@ -4,22 +4,15 @@ local C=require "colors"
 local Models=require "models"
 local Diagnostic=require "diagnostic"
 local Audio=require "audio"
+local Background=require "background"
 Game={state="menu",fps=60}
-local camera={x=4,y=5.2,z=-7,yaw=-math.atan(4,7),pitch=-math.atan(4.4/math.sqrt(65))}
-local scene={}
-local obstacles={{x=-2.3,z=0,w=1.7,d=0.6,model="desk"},{x=-2.3,z=-0.7,w=0.46,d=0.53,model="chair"},{x=2.1,z=1.7,w=0.9,d=0.44,model="cabinet"}}
+local camera=Background.layout.camera
+local obstacles={{x=-2.5,z=0.3,w=1.6,d=2.9,h=1.5},{x=3.15,z=1.8,w=0.25,d=0.25,h=4.5}}
 local function object(mesh,x,y,z) return {mesh=mesh,x=x or 0,y=y or 0,z=z or 0} end
 local function box(w,h,d,x,y,z,a,b,c)
     return object(G.box(w,h,d,a or 3,b or 2,c or 4),x,y,z)
 end
-local floor=G.mesh()
--- Tile only along depth: reduces painter overlap at the feet of actors.
-for z=-5,4 do G.quad(floor,{-4,0,z},{-4,0,z+1},{4,0,z+1},{4,0,z},z%2==0 and 2 or 3) end
-scene[1]=object(floor)
-scene[#scene+1]=box(8,2.6,0.18,0,1.3,5.1,3,2,4)
-scene[#scene+1]=box(0.18,2.6,10,-4.1,1.3,0,3,2,4)
-for _,b in ipairs(obstacles) do scene[#scene+1]=object(Models.prop(b.model),b.x,0,b.z) end
-local door=box(1.3,2.1,0.13,2.5,1.05,4.95,14,2,14)
+local door={x=3,y=0,z=4.7}
 local key=box(0.36,0.15,0.2,-2.7,0.35,3.5,8,13,15)
 local playerRig=Models.actor(false)
 local enemyRig=Models.actor(true)
@@ -29,7 +22,7 @@ function Game.setOriginal(value)
     Models.original=value
     playerRig,enemyRig=Models.actor(false),Models.actor(true)
     player.mesh,enemy.mesh=playerRig.mesh,enemyRig.mesh
-    for i,b in ipairs(obstacles) do scene[i+3].mesh=Models.prop(b.model) end
+
 end
 local previous={}
 local tick=0
@@ -95,7 +88,7 @@ function Game.step(dt)
                 -- Line of sight: crates stop both the enemy and the shot.
                 local clear=true
                 if d>0.001 then for _,b in ipairs(obstacles) do
-                    if G.rayBox({minx=b.x-b.w/2,maxx=b.x+b.w/2,miny=0,maxy=0.85,minz=b.z-b.d/2,maxz=b.z+b.d/2},player.x,0.7,player.z,(enemy.x-player.x)/d,0,(enemy.z-player.z)/d,d) then clear=false end
+                    if G.rayBox({minx=b.x-b.w/2,maxx=b.x+b.w/2,miny=0,maxy=b.h or 0.85,minz=b.z-b.d/2,maxz=b.z+b.d/2},player.x,0.7,player.z,(enemy.x-player.x)/d,0,(enemy.z-player.z)/d,d) then clear=false end
                 end end
                 if d<4.5 and dot>math.max(0,d*0.85) and clear then Game.stun=3;message("INIMIGO ATORDOADO - CORRA!") else message("DISPARO") end
             else message("SEM MUNICAO") end
@@ -118,11 +111,16 @@ function Game.step(dt)
 end
 local function text(s,x,y,c) ui.print(s,x,y,C.index[c or 9]) end
 local function rect(x,y,w,h,c) ui.rectfill(x,y,x+w,y+h,C.index[c]) end
+local function drawActor(o)
+    if o~=player or Game.invulnerable==0 or tick%4<2 then R.submit(o);R.flush();Background.occlude(o) end
+end
 function Game.draw()
+    if type(ui.camera)=="function" then ui.camera(0,0) end
+    if type(ui.clip)=="function" then ui.clip(0,0,480,270) end
     C.register();rect(0,0,479,269,10)
     if Game.colorTest then Diagnostic.draw();text("SOM: "..Audio.status,12,258,9);return end
     if Game.state=="menu" then
-        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.7",105,80,9)
+        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.8",105,80,9)
         text("UM DEPOSITO. UMA CHAVE. UMA CHANCE.",105,113,5)
         text("CRUZ: ANDAR / GIRAR    B: CORRER",111,145,9)
         text("A: INTERAGIR    R: DISPARAR    Y: REINICIAR",77,164,9)
@@ -131,17 +129,16 @@ function Game.draw()
         text("SOM: "..Audio.status,65,248,11)
         return
     end
-    -- Fixed orientation, closer framing follows position rather than heading.
-    camera.x,camera.z=player.x+4,player.z-7
     R.begin(camera)
-    -- Ground is entirely below every actor: finish it before sorting props.
-    -- Average-depth sorting mixed wide floor tiles over legs at some positions.
-    R.submit(scene[1]);R.flush()
-    for i=2,#scene do R.submit(scene[i]) end
-    R.submit(door)
-    if not Game.key then R.submit(key) end
-    if Game.invulnerable==0 or tick%4<2 then R.submit(player) end
-    R.submit(enemy);R.flush()
+    if Background.draw() then
+        if not Game.key then R.submit(key);R.flush();Background.occlude(key) end
+        -- Draw actors far-to-near; each may be behind the pre-rendered dumpster.
+        local cy,sy=math.cos(camera.yaw),math.sin(camera.yaw)
+        local pd=(player.x-camera.x)*sy+(player.z-camera.z)*cy
+        local ed=(enemy.x-camera.x)*sy+(enemy.z-camera.z)*cy
+        local first,second=player,enemy;if ed>pd then first,second=enemy,player end
+        drawActor(first);drawActor(second)
+    end
     Game.triangles=R.triangles
     rect(0,0,479,19,0);rect(0,228,479,41,0)
     text("VIDA "..Game.health.."  TIROS "..Game.ammo.."  CHAVE "..(Game.key and "SIM" or "NAO"),8,5,9)
@@ -157,6 +154,10 @@ function Game.draw()
         text("B OU Y: TENTAR NOVAMENTE",141,138,9)
     end
 end
+
+
+
+
 
 
 

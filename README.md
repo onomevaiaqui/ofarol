@@ -1,6 +1,6 @@
 # Ultima Saida - survival horror 3D para Lupi
 
-Prototipo 0.7 independente do jogo de corrida. Uma sala de deposito, um personagem, um inimigo, uma chave e uma porta de fuga. Camera obliqua mais proxima, com orientacao fixa e posicao acompanhando o jogador; malhas XYZ projetadas em perspectiva e rasterizadas com ui.trisfill. Sem raycasting 2,5D, texturas ou sombras dinamicas.
+Prototipo 0.8 independente do jogo de corrida. Um beco urbano pre-renderizado, um personagem 3D, um inimigo 3D, uma chave e uma porta de fuga. Camera fixa, alinhada ao render do cenario. Personagens XYZ projetados em perspectiva com ui.trisfill; fundo e mascara desenhados como bitmaps. Texturas e sombras do cenario sao calculadas offline.
 
 ## Como jogar
 
@@ -15,14 +15,14 @@ Pegue a chave no fundo esquerdo da sala e abra a porta verde. O inimigo causa da
 
 ## Instalar
 
-O ZIP de teste tem game.lua e lupi.yaml na raiz. Instale pelo mesmo fluxo de importacao de jogos usado na corrida. Nao substitua o projeto da corrida. Repositorio: https://github.com/onomevaiaqui/ofarol. Metadados com public: true para descoberta pelo catalogo do Lupi.
+O ZIP compilado de teste tem game.lua, lupi.yaml, palette.lua, lupi_manifest.txt e os bitmaps indexados em backgrounds/ na raiz. Instale pelo mesmo fluxo de importacao de jogos usado na corrida. Nao substitua o projeto da corrida. Repositorio: https://github.com/onomevaiaqui/ofarol. Metadados com public: true para descoberta pelo catalogo do Lupi.
 
 ## Limites e verificacao
 
-- Tela 480x270, paleta 48 cores BGR555; assets externos adaptados documentados em ASSETS.md.
+- Tela 480x270, paleta compartilhada de 169 cores BGR555; assets externos adaptados documentados em ASSETS.md.
 - Malhas importadas da itch.io; renderer.lua e geometry.lua derivados da base de corrida.
 - 2048 entradas no pool reutilizavel de triangulos; recorte proximo e na tela, backface culling, coordenadas inteiras e painter sort. Sem z-buffer.
-- Modo ORIGINAL: 2873 triangulos de entrada; pico amostrado: 1146 triangulos nativos visiveis. Modo LEVE: malhas anteriores, 521 triangulos de entrada. O numero exibido e calculado por quadro.
+- Cenario: zero triangulos 3D em tempo de execucao. Atores e chave: 2176 triangulos de entrada no ORIGINAL / 375 no LEVE. Picos locais amostrados: 765 ORIGINAL / 168 LEVE. O numero exibido e calculado por quadro.
 - O teste no computador utiliza 24 FPS simulados apenas para dt. Esse valor NAO mede nem promete o FPS do aparelho. Medir no console antes de aumentar o cenario.
 - Sem dependencia de package, io, os, debug, collectgarbage, music ou sfx em tempo de execucao.
 - Sem save persistente. Audio conectado a music.loop/sfx.fx com diagnostico; reproducao no hardware ainda NAO confirmada. Nao confundir pedido aceito com som audivel.
@@ -87,3 +87,19 @@ Humano sem roupa/corpo pintado artificialmente, em cinza neutro, pois a base Com
 Cena original: 2873 triangulos de entrada, pico de 1146 nativos na varredura local. O modo usa mais geometria que a versao anterior, cuja foto mostrava 12 FPS; e esperado que o desempenho piore. O objetivo e comparar fidelidade primeiro. L permite voltar sem reinstalar.
 
 Audio: sete arquivos Furnace v173 originais para menu, ambiente, disparo, dano, coleta e finais. Foram decodificados pelo Furnace local para PCM nao silencioso. O modulo solicita reproducao via API disponivel e mostra FUR/SFX SOLICITADO - NAO CONFIRMADO, ERRO ou SEM API. Essa verificacao nao demonstra entrega pelo catalogo nem reproducao audivel no console. Sem API, o jogo permanece utilizavel. Todos os .fur estao em music/ e devem acompanhar o pacote.
+
+## Versao 0.8 - beco pre-renderizado com personagens 3D
+
+Cenario montado no Blender/Cycles com modelos e texturas do PSX style urban stacked pack, valsekamerplant, CC0. Uma camera fixa de 480x208 pixels (desenhada de y=20 a y=227), fachadas de tijolos, porta metalica, poste, asfalto e cacamba. Render nao gerado por IA. Creditos e reproducao em ASSETS.md.
+
+O fundo backgrounds/alley.png e uma imagem opaca. A mascara backgrounds/dumpster.png tem 81x66 pixels e transparencia. O fundo nao emite chamadas ui.trisfill. Jogador/inimigo/chave continuam modelos 3D, com controles e objetivo preservados. L alterna malhas originais/reduzidas; o modo ORIGINAL preserva a pose base sem animacao de membros. O modo LEVE conserva a animacao aproximada existente.
+
+Oclusao por mascara da cacamba classificada pela posicao horizontal do ator e ordem de profundidade. E uma aproximacao por objeto, sem z-buffer por pixel; nao suporta atravesar a cacamba nem alteracao de camera. Colisao da cacamba corresponde ao volume de 1.6x2.9 unidades; o poste tambem bloqueia movimento/tiros. Asfalto alinhado ao plano y=0.
+
+A camera do Blender e a do runtime foram comparadas em cinco pontos de calibracao, com tolerancia de 0.1 pixel. Testes adicionais verificam mascara na frente/atras, imagem ausente, paleta, transparencia, bytes do bitmap e manifesto. Previas room/encounter usam Game.draw e os PNGs convertidos; sao reconstrucoes locais, NAO capturas do firmware.
+
+Background e mascara somam 105186 bytes de pixels indexados, sem contar Lua, caches, buffers, atores ou audio. Paleta 169 cores (limite indexado 256). O projeto remapeia as cores dos atores para a paleta efetivamente gerada pelo catalogo e inclui swatches.png para preservar essas cores durante a importacao.
+
+Publicacao: o GitHub contem PNGs e codigo-fonte; o catalogo precisa converter PNGs e fornecer Sprites.backgrounds.alley/dumpster. Se nao fornecer, aparece FUNDO NAO IMPORTADO. O pacote compilado alternativo inclui imagens ja indexadas e lupi_manifest.txt com metadados bitmap, seguindo o formato do simulador publico. Execute python tools/build-prerender.py para gera-lo. Nao envie a pasta .build ao repositorio.
+
+Audio: mesmos sete .fur e modulo da 0.7; reproducao no console continua nao confirmada. FPS do novo modo hibrido ainda nao medido no aparelho. O esqueleto original sozinho continua caro; os picos locais nao sao promessa de FPS.

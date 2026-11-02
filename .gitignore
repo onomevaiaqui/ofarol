@@ -2,3 +2,5 @@
 /tools/*.png
 *.luac
 .build/
+/backgrounds/alley
+/backgrounds/dumpster
