@@ -1,6 +1,7 @@
 local G=require "geometry"
 local R=require "renderer"
 local C=require "colors"
+local Models=require "models"
 Game={state="menu",fps=60}
 local camera={x=9,y=12,z=-14,yaw=-math.atan(9,14),pitch=-math.atan(12/math.sqrt(277))}
 local scene={}
@@ -15,19 +16,13 @@ for z=-5,4 do G.quad(floor,{-4,0,z},{-4,0,z+1},{4,0,z+1},{4,0,z},z%2==0 and 2 or
 scene[1]=object(floor)
 scene[#scene+1]=box(8,2.6,0.18,0,1.3,5.1,3,2,4)
 scene[#scene+1]=box(0.18,2.6,10,-4.1,1.3,0,3,2,4)
-for _,b in ipairs(obstacles) do scene[#scene+1]=box(b.w,0.85,b.d,b.x,0.425,b.z,13,2,4) end
+for _,b in ipairs(obstacles) do scene[#scene+1]=object(Models.table(b.w,b.d),b.x,0,b.z) end
 local door=box(1.3,2.1,0.13,2.5,1.05,4.95,14,2,14)
 local key=box(0.36,0.15,0.2,-2.7,0.35,3.5,8,13,15)
-local actor=G.mesh()
-G.append(actor,G.box(0.46,0.65,0.32,6,11,6),0,0.75,0)
-G.append(actor,G.box(0.3,0.3,0.3,15,13,15),0,1.23,0)
-G.append(actor,G.box(0.34,0.42,0.25,10,10,11),0,0.21,0)
-local hostile=G.mesh()
-G.append(hostile,G.box(0.52,0.78,0.35,7,13,7),0,0.73,0)
-G.append(hostile,G.box(0.33,0.3,0.3,4,2,5),0,1.27,0)
-G.append(hostile,G.box(0.34,0.35,0.26,10,10,2),0,0.175,0)
-local player=object(actor)
-local enemy=object(hostile)
+local playerRig=Models.actor(false)
+local enemyRig=Models.actor(true)
+local player=object(playerRig.mesh)
+local enemy=object(enemyRig.mesh)
 local previous={}
 local tick=0
 local function held(k)
@@ -42,14 +37,17 @@ local function blocked(x,z)
     return false
 end
 local function move(o,x,z)
+    local oldx,oldz=o.x,o.z
     if not blocked(o.x+x,o.z) then o.x=o.x+x end
     if not blocked(o.x,o.z+z) then o.z=o.z+z end
+    local dx,dz=o.x-oldx,o.z-oldz;return math.sqrt(dx*dx+dz*dz)
 end
 function Game.start()
     Game.state="play";Game.health=3;Game.ammo=3;Game.key=false;Game.message="ENCONTRE A CHAVE E A SAIDA";Game.timer=3
     Game.invulnerable=0;Game.stun=0;Game.flash=0
     player.x,player.z,player.yaw=0,-3.5,0
     enemy.x,enemy.z,enemy.yaw=2,2.8,math.pi
+    playerRig.phase,enemyRig.phase=0,0;Models.animate(playerRig,0);Models.animate(enemyRig,0)
 end
 local function message(s) Game.message=s;Game.timer=2.5 end
 function Game.step(dt)
@@ -69,7 +67,8 @@ function Game.step(dt)
         Game.stun=math.max(0,Game.stun-dt);Game.flash=math.max(0,Game.flash-dt)
         player.yaw=(player.yaw+((now.right and 1 or 0)-(now.left and 1 or 0))*2.5*dt)%(math.pi*2)
         local amount=((now.up and 1 or 0)-(now.down and 1 or 0))*(now.run and 2.7 or 1.6)*dt
-        move(player,math.sin(player.yaw)*amount,math.cos(player.yaw)*amount)
+        local walked=move(player,math.sin(player.yaw)*amount,math.cos(player.yaw)*amount)
+        Models.animate(playerRig,walked)
         if pressed("act") then
             if not Game.key and dist(player,key)<1.1 then Game.key=true;message("CHAVE ENCONTRADA - PROCURE A PORTA VERDE")
             elseif dist(player,door)<1.2 then
@@ -90,12 +89,14 @@ function Game.step(dt)
             else message("SEM MUNICAO") end
         end
         local d=dist(player,enemy)
+        local ex,ez=enemy.x,enemy.z
         if Game.stun==0 and d>0.001 then
             local dx,dz=(player.x-enemy.x)/d,(player.z-enemy.z)/d
             enemy.yaw=math.atan(dx,dz)
             if d<5.8 then move(enemy,dx*0.85*dt,dz*0.85*dt)
             else move(enemy,math.sin(tick*0.01)*0.3*dt,0) end
         end
+        Models.animate(enemyRig,math.sqrt((enemy.x-ex)^2+(enemy.z-ez)^2),Game.stun>0)
         if d<0.62 and Game.stun==0 and Game.invulnerable==0 then
             Game.health=Game.health-1;Game.invulnerable=1.8;message("FERIDO! AFASTE-SE")
             if Game.health<=0 then Game.state="dead" end
@@ -108,7 +109,7 @@ local function rect(x,y,w,h,c) ui.rectfill(x,y,x+w,y+h,C.index[c]) end
 function Game.draw()
     C.register();rect(0,0,479,269,10)
     if Game.state=="menu" then
-        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.1",105,80,9)
+        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.2",105,80,9)
         text("UM DEPOSITO. UMA CHAVE. UMA CHANCE.",105,113,5)
         text("CRUZ: ANDAR / GIRAR    B: CORRER",111,145,9)
         text("A: INTERAGIR    R: DISPARAR    Y: REINICIAR",77,164,9)
@@ -136,3 +137,5 @@ function Game.draw()
         text("B OU Y: TENTAR NOVAMENTE",141,138,9)
     end
 end
+
+

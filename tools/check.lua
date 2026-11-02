@@ -37,7 +37,18 @@ snapshot("menu");tap(BTN_Z);assert(Game.state=="play")
 snapshot("room")
 local max=0
 for i=1,240 do buttons[RIGHT]=1;Game.step(1/24);Game.draw();max=math.max(max,Game.triangles);assert(require("renderer").dropped==0) end
-buttons={};Game.start();player.x,player.z=-2.7,3.5;tap(BTN_G);assert(Game.key,"key")
+buttons={}
+Game.start();player.x,player.z=0,-2
+local before={};for i,v in ipairs(player.mesh.v) do before[i]=v end
+buttons[UP]=1;Game.step(1/24);buttons={}
+local changed=false;for i,v in ipairs(player.mesh.v) do if before[i]~=v then changed=true end end
+assert(changed,"walk must deform limbs")
+snapshot("walking")
+for x=-3,3,1.5 do for z=-4,4,2 do for yaw=0,5 do
+    player.x,player.z,player.yaw=x,z,yaw;Game.draw()
+    max=math.max(max,Game.triangles);assert(require("renderer").dropped==0,"pool overflow")
+end end end
+Game.start();player.x,player.z=-2.7,3.5;tap(BTN_G);assert(Game.key,"key")
 player.x,player.z=2.5,4.3;tap(BTN_G);assert(Game.state=="win","escape");snapshot("escape")
 Game.start();player.x,player.z=0,-2;player.yaw=0;enemy.x,enemy.z=0,0
 tap(BTN_E);assert(Game.ammo==2 and Game.stun>0,"shot stun")
@@ -49,3 +60,4 @@ for i=1,20 do Game.step(1/24) end
 assert(player.z<=-1.25,"crate collision")
 print("PASS: restricted loader, clipping, winding, rotation, key, exit, stun, damage, restart, collision")
 print("Peak native triangles in sampled fixed view: "..max)
+
