@@ -1,6 +1,6 @@
 # Ultima Saida - survival horror 3D para Lupi
 
-Prototipo 0.2 independente do jogo de corrida. Uma sala de deposito, um personagem, um inimigo, uma chave e uma porta de fuga. Camera fixa obliqua; malhas XYZ projetadas em perspectiva e rasterizadas com ui.trisfill. Sem raycasting 2,5D, texturas ou sombras dinamicas.
+Prototipo 0.3 independente do jogo de corrida. Uma sala de deposito, um personagem, um inimigo, uma chave e uma porta de fuga. Camera fixa obliqua; malhas XYZ projetadas em perspectiva e rasterizadas com ui.trisfill. Sem raycasting 2,5D, texturas ou sombras dinamicas.
 
 ## Como jogar
 
@@ -21,7 +21,7 @@ O ZIP de teste tem game.lua e lupi.yaml na raiz. Instale pelo mesmo fluxo de imp
 - Tela 480x270, paleta 32 cores BGR555, sem assets externos.
 - Malhas originais simples; renderer.lua, geometry.lua e colors.lua copiados da base de corrida sem modificar a origem.
 - 192 entradas no pool reutilizavel de triangulos; recorte proximo e na tela, backface culling, coordenadas inteiras e painter sort. Sem z-buffer.
-- Cena: 288 triangulos de entrada (incluindo chave e atores); pico amostrado: 156 triangulos nativos visiveis. O numero exibido e calculado por quadro.
+- Cena: 309 triangulos de entrada (incluindo chave e atores); pico amostrado: 171 triangulos nativos visiveis. O numero exibido e calculado por quadro.
 - O teste no computador utiliza 24 FPS simulados apenas para dt. Esse valor NAO mede nem promete o FPS do aparelho. Medir no console antes de aumentar o cenario.
 - Sem dependencia de package, io, os, debug, collectgarbage, music ou sfx em tempo de execucao.
 - Sem save persistente nem audio nesta versao. O audio da corrida continua sem reproducao confirmada no hardware. Nenhuma descoberta permite prometer som neste prototipo.
@@ -44,3 +44,11 @@ Personagens com tronco afunilado, cabeca facetada, bracos e pernas independentes
 Mesas de madeira com tampo e quatro pes (42 triangulos cada). Faces escondidas dos pes e do tampo removidas. Colisao continua usando o volume inteiro da mesa; ainda nao e possivel passar nem atirar por baixo.
 
 O pico de 156 triangulos foi medido em giro e varredura de posicoes/orientacoes no computador; 92 na versao 0.1. Nao representa FPS do console. Versao 0.1 preservada na tag v0.1-baseline para retorno se necessario.
+
+## Versao 0.3 - piso e cabecas facetadas
+
+O piso agora termina de ser desenhado antes dos objetos e personagens. Isso corrige o piso cobrindo pernas devido a ordenacao por profundidade media, sem subdividir o chao nem adicionar triangulos. Objetos e personagens continuam ordenados juntos para manter oclusao por mesas. Isso nao introduz z-buffer; intersecoes entre outros objetos ainda tem os limites do painter sort.
+
+Cabecas com testa mais larga e queixo estreito. Inimigo com mascara clara, olhos e nariz geometricos, roupa escura e membros animados. Modelo original inspirado na linguagem visual de horror low poly, sem copiar o asset da referencia. Jogador: 76 triangulos; inimigo: 81. A mascara perde detalhe na camera geral pela resolucao e distancia; a previa de detalhe usa uma camera separada de inspecao, nao a camera de jogo.
+
+Pico local amostrado: 171 triangulos (156 na 0.2). FPS do aparelho ainda precisa ser conferido. Testes adicionais verificam piso desenhado antes dos atores e vertices dos pes acima do chao durante um ciclo completo de caminhada.

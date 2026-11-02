@@ -26,12 +26,13 @@ local function find(fn,name)
 end
 local player=find(Game.step,"player");local enemy=find(Game.step,"enemy")
 assert(player and enemy)
+local camera=find(Game.draw,"camera")
 local open=io.open
 package,io,os,debug,collectgarbage,sfx,music=nil,nil,nil,nil,nil,nil,nil
 local function tap(k) buttons[k]=1;Game.step(1/24);buttons[k]=0;Game.step(1/24) end
-local function snapshot(name)
+local function snapshot(name,draw)
     output=assert(open(root.."/tools/"..name..".csv","w"));palette=assert(open(root.."/tools/palette.csv","w"))
-    Game.draw();output:close();palette:close();output=nil;palette=nil
+    local callback=draw or Game.draw;callback();output:close();palette:close();output=nil;palette=nil
 end
 snapshot("menu");tap(BTN_Z);assert(Game.state=="play")
 snapshot("room")
@@ -44,6 +45,20 @@ buttons[UP]=1;Game.step(1/24);buttons={}
 local changed=false;for i,v in ipairs(player.mesh.v) do if before[i]~=v then changed=true end end
 assert(changed,"walk must deform limbs")
 snapshot("walking")
+local renderer=require "renderer"
+local rawSubmit,rawFlush=renderer.submit,renderer.flush
+local firstFlush=false
+renderer.submit=function(o,...)
+    local ground=true;for i=2,#o.mesh.v,3 do if o.mesh.v[i]~=0 then ground=false;break end end
+    if ground then assert(not firstFlush,"floor after foreground") else assert(firstFlush,"foreground before floor flush") end
+    return rawSubmit(o,...)
+end
+renderer.flush=function(...) local result=rawFlush(...);firstFlush=true;return result end
+Game.draw()
+renderer.submit,renderer.flush=rawSubmit,rawFlush
+-- Feet must remain above ground for a full stride, not just the rest pose.
+local Models=require "models";local rig=Models.actor(false)
+for i=1,80 do Models.animate(rig,0.04);for j=2,#rig.mesh.v,3 do assert(rig.mesh.v[j]>=0,"vertex below floor") end end
 for x=-3,3,1.5 do for z=-4,4,2 do for yaw=0,5 do
     player.x,player.z,player.yaw=x,z,yaw;Game.draw()
     max=math.max(max,Game.triangles);assert(require("renderer").dropped==0,"pool overflow")
@@ -58,6 +73,16 @@ assert(Game.state=="dead");tap(BTN_F);assert(Game.state=="play" and Game.health=
 Game.start();player.x,player.z=-2.3,-1.4;player.yaw=0;buttons[UP]=1
 for i=1,20 do Game.step(1/24) end
 assert(player.z<=-1.25,"crate collision")
+buttons={};Game.start()
+snapshot("mask-detail",function()
+    require("colors").register();ui.rectfill(0,0,479,269,10)
+    renderer.begin({x=2,y=0.85,z=-0.6,yaw=0,pitch=0})
+    renderer.submit(enemy);renderer.flush()
+    ui.print("DETALHE DA MALHA 3D - CAMERA DE INSPECAO",70,250,9)
+end)
 print("PASS: restricted loader, clipping, winding, rotation, key, exit, stun, damage, restart, collision")
 print("Peak native triangles in sampled fixed view: "..max)
+
+
+
 

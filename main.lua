@@ -109,7 +109,7 @@ local function rect(x,y,w,h,c) ui.rectfill(x,y,x+w,y+h,C.index[c]) end
 function Game.draw()
     C.register();rect(0,0,479,269,10)
     if Game.state=="menu" then
-        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.2",105,80,9)
+        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.3",105,80,9)
         text("UM DEPOSITO. UMA CHAVE. UMA CHANCE.",105,113,5)
         text("CRUZ: ANDAR / GIRAR    B: CORRER",111,145,9)
         text("A: INTERAGIR    R: DISPARAR    Y: REINICIAR",77,164,9)
@@ -118,7 +118,10 @@ function Game.draw()
         return
     end
     R.begin(camera)
-    for _,o in ipairs(scene) do R.submit(o) end
+    -- Ground is entirely below every actor: finish it before sorting props.
+    -- Average-depth sorting mixed wide floor tiles over legs at some positions.
+    R.submit(scene[1]);R.flush()
+    for i=2,#scene do R.submit(scene[i]) end
     R.submit(door)
     if not Game.key then R.submit(key) end
     if Game.invulnerable==0 or tick%4<2 then R.submit(player) end
@@ -137,5 +140,6 @@ function Game.draw()
         text("B OU Y: TENTAR NOVAMENTE",141,138,9)
     end
 end
+
 
 

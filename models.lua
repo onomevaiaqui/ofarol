@@ -35,13 +35,25 @@ function M.actor(infected)
         G.append(m,mesh,x,y,z)
         if pivot then limbs[#limbs+1]={first=first,last=#m.v,x=x,y=pivot,z=z} end
     end
-    local shirt=infected and 7 or 6
-    part(taper(0.30,0.48,0.54,0.24,0.30,shirt,infected and 13 or 11,shirt),0,0.89,0)
-    -- Octagonal silhouette head: six vertices, eight faces, no box head.
-    local skin=infected and 4 or 15
-    local head={v={0,0.22,0, -0.17,0,0, 0,0,-0.16, 0.17,0,0, 0,0,0.18, 0,-0.18,0},
-        f={1,3,2,10,1,4,3,10,1,5,4,skin,1,2,5,skin,6,2,3,skin,6,3,4,skin,6,4,5,skin,6,5,2,skin}}
-    part(head,0,1.38,infected and 0.06 or 0)
+    local shirt=infected and 2 or 6
+    part(taper(0.30,0.48,0.54,0.24,0.30,shirt,infected and 10 or 11,shirt),0,0.89,0)
+    -- Angular hood/hair, broad forehead and narrow chin: 16 base triangles.
+    local skin=infected and 9 or 15
+    local head={v={-0.12,-0.13,-0.12, 0.12,-0.13,-0.12, 0.12,-0.13,0.15, -0.12,-0.13,0.15,
+        -0.18,0.17,-0.14, 0.18,0.17,-0.14, 0.18,0.17,0.17, -0.18,0.17,0.17,
+        0,0.31,0, 0,-0.29,0.07},
+        f={1,6,2,10,1,5,6,10, 2,7,3,2,2,6,7,10,
+           3,8,4,skin,3,7,8,skin, 4,5,1,2,4,8,5,10,
+           5,9,6,10,6,9,7,10,7,9,8,2,8,9,5,10,
+           1,2,10,10,2,3,10,2,3,4,10,skin,4,1,10,2}}
+    if infected then
+        -- Dark diamond eye sockets and a nose mark, geometry rather than textures.
+        for _,x in ipairs({-0.085,0.085}) do
+            G.quad(head,{x,-0.035,0.176},{x+0.045,0.02,0.176},{x,0.075,0.176},{x-0.045,0.02,0.176},0)
+        end
+        G.append(head,{v={-0.022,-0.11,0.16,0.022,-0.11,0.16,0,-0.055,0.165},f={1,2,3,0}},0,0,0)
+    end
+    part(head,0,1.42,infected and 0.06 or 0)
     for _,sign in ipairs({-1,1}) do
         part(taper(0.12,0.16,0.57,0.13,0.18,shirt,shirt,skin),sign*0.31,0.84,0,1.12)
         part(taper(0.12,0.17,0.59,0.19,0.20,10,11,10),sign*0.115,0.31,0,0.60)
@@ -69,5 +81,9 @@ function M.animate(rig,distance,stunned)
     end
 end
 return M
+
+
+
+
 
 
