@@ -1,6 +1,6 @@
 # Ultima Saida - survival horror 3D para Lupi
 
-Prototipo 0.3 independente do jogo de corrida. Uma sala de deposito, um personagem, um inimigo, uma chave e uma porta de fuga. Camera fixa obliqua; malhas XYZ projetadas em perspectiva e rasterizadas com ui.trisfill. Sem raycasting 2,5D, texturas ou sombras dinamicas.
+Prototipo 0.4 independente do jogo de corrida. Uma sala de deposito, um personagem, um inimigo, uma chave e uma porta de fuga. Camera obliqua mais proxima, com orientacao fixa e posicao acompanhando o jogador; malhas XYZ projetadas em perspectiva e rasterizadas com ui.trisfill. Sem raycasting 2,5D, texturas ou sombras dinamicas.
 
 ## Como jogar
 
@@ -21,7 +21,7 @@ O ZIP de teste tem game.lua e lupi.yaml na raiz. Instale pelo mesmo fluxo de imp
 - Tela 480x270, paleta 32 cores BGR555, sem assets externos.
 - Malhas originais simples; renderer.lua, geometry.lua e colors.lua copiados da base de corrida sem modificar a origem.
 - 192 entradas no pool reutilizavel de triangulos; recorte proximo e na tela, backface culling, coordenadas inteiras e painter sort. Sem z-buffer.
-- Cena: 309 triangulos de entrada (incluindo chave e atores); pico amostrado: 171 triangulos nativos visiveis. O numero exibido e calculado por quadro.
+- Cena: 309 triangulos de entrada (incluindo chave e atores); pico amostrado: 180 triangulos nativos visiveis. O numero exibido e calculado por quadro.
 - O teste no computador utiliza 24 FPS simulados apenas para dt. Esse valor NAO mede nem promete o FPS do aparelho. Medir no console antes de aumentar o cenario.
 - Sem dependencia de package, io, os, debug, collectgarbage, music ou sfx em tempo de execucao.
 - Sem save persistente nem audio nesta versao. O audio da corrida continua sem reproducao confirmada no hardware. Nenhuma descoberta permite prometer som neste prototipo.
@@ -52,3 +52,11 @@ O piso agora termina de ser desenhado antes dos objetos e personagens. Isso corr
 Cabecas com testa mais larga e queixo estreito. Inimigo com mascara clara, olhos e nariz geometricos, roupa escura e membros animados. Modelo original inspirado na linguagem visual de horror low poly, sem copiar o asset da referencia. Jogador: 76 triangulos; inimigo: 81. A mascara perde detalhe na camera geral pela resolucao e distancia; a previa de detalhe usa uma camera separada de inspecao, nao a camera de jogo.
 
 Pico local amostrado: 171 triangulos (156 na 0.2). FPS do aparelho ainda precisa ser conferido. Testes adicionais verificam piso desenhado antes dos atores e vertices dos pes acima do chao durante um ciclo completo de caminhada.
+
+## Versao 0.4 - qualidade avaliada na camera de jogo
+
+Camera mais proxima, acompanhando a posicao do jogador com orientacao constante. Personagens mais altos, cintura mais estreita, bracos e pernas alongados. Mesmas 309 faces de entrada na cena. Cores do inimigo ajustadas para distinguir roupa e membros do piso. Paleta de cenario mais neutra, ainda em BGR555; a diferenca entre a foto da TV e a previa nao foi diagnosticada nem considerada resolvida.
+
+Previas room e encounter usam exatamente Game.draw e a camera de jogo. Encounter posiciona os atores numa situacao de encontro para avaliar legibilidade. O indicador PC TRI identifica uma reconstrucao local e nao um FPS medido no aparelho. Nao usar o antigo mask-detail como evidencia da qualidade durante o jogo.
+
+A varredura de posicoes e orientacoes verificou silhueta do jogador com pelo menos 45 pixels de altura, coordenadas nativas validas, ausencia de overflow e pico de 180 triangulos. Isso nao mede FPS. No ultimo relato anterior a esta versao, a foto do aparelho mostrava 19 FPS. O enquadramento proximo aumenta a area rasterizada, mesmo sem aumentar a malha; medir novamente no console. Mantidos os controles e o piso separado.

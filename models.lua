@@ -3,6 +3,7 @@ local G=require "geometry"
 local M={}
 local function taper(w0,w1,h,d0,d1,front,side,top)
     local m=G.box(1,1,1,front,side,top)
+    m.f[28],m.f[32]=front,front
     for i=1,#m.v,3 do
         local upper=m.v[i+1]>0
         m.v[i]=m.v[i]*(upper and w1 or w0)
@@ -35,8 +36,8 @@ function M.actor(infected)
         G.append(m,mesh,x,y,z)
         if pivot then limbs[#limbs+1]={first=first,last=#m.v,x=x,y=pivot,z=z} end
     end
-    local shirt=infected and 2 or 6
-    part(taper(0.30,0.48,0.54,0.24,0.30,shirt,infected and 10 or 11,shirt),0,0.89,0)
+    local shirt=infected and 4 or 6
+    part(taper(0.25,0.43,0.62,0.23,0.28,shirt,infected and 10 or 11,shirt),0,1.02,0)
     -- Angular hood/hair, broad forehead and narrow chin: 16 base triangles.
     local skin=infected and 9 or 15
     local head={v={-0.12,-0.13,-0.12, 0.12,-0.13,-0.12, 0.12,-0.13,0.15, -0.12,-0.13,0.15,
@@ -53,10 +54,10 @@ function M.actor(infected)
         end
         G.append(head,{v={-0.022,-0.11,0.16,0.022,-0.11,0.16,0,-0.055,0.165},f={1,2,3,0}},0,0,0)
     end
-    part(head,0,1.42,infected and 0.06 or 0)
+    part(head,0,1.58,infected and 0.06 or 0)
     for _,sign in ipairs({-1,1}) do
-        part(taper(0.12,0.16,0.57,0.13,0.18,shirt,shirt,skin),sign*0.31,0.84,0,1.12)
-        part(taper(0.12,0.17,0.59,0.19,0.20,10,11,10),sign*0.115,0.31,0,0.60)
+        part(taper(0.10,0.14,0.70,0.12,0.16,shirt,shirt,skin),sign*0.29,0.97,0,1.30)
+        part(taper(0.12,0.17,0.69,0.19,0.20,infected and 3 or 11,infected and 2 or 10,10),sign*0.115,0.36,0,0.70)
     end
     local bind={}
     for i,v in ipairs(m.v) do bind[i]=v end
@@ -81,6 +82,8 @@ function M.animate(rig,distance,stunned)
     end
 end
 return M
+
+
 
 
 

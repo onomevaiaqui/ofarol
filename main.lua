@@ -3,7 +3,7 @@ local R=require "renderer"
 local C=require "colors"
 local Models=require "models"
 Game={state="menu",fps=60}
-local camera={x=9,y=12,z=-14,yaw=-math.atan(9,14),pitch=-math.atan(12/math.sqrt(277))}
+local camera={x=4,y=5.2,z=-7,yaw=-math.atan(4,7),pitch=-math.atan(4.4/math.sqrt(65))}
 local scene={}
 local obstacles={{x=-2.3,z=0,w=1.3,d=2},{x=2.1,z=1.7,w=1.5,d=1.2}}
 local function object(mesh,x,y,z) return {mesh=mesh,x=x or 0,y=y or 0,z=z or 0} end
@@ -109,7 +109,7 @@ local function rect(x,y,w,h,c) ui.rectfill(x,y,x+w,y+h,C.index[c]) end
 function Game.draw()
     C.register();rect(0,0,479,269,10)
     if Game.state=="menu" then
-        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.3",105,80,9)
+        text("ULTIMA SAIDA",182,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.4",105,80,9)
         text("UM DEPOSITO. UMA CHAVE. UMA CHANCE.",105,113,5)
         text("CRUZ: ANDAR / GIRAR    B: CORRER",111,145,9)
         text("A: INTERAGIR    R: DISPARAR    Y: REINICIAR",77,164,9)
@@ -117,6 +117,8 @@ function Game.draw()
         text("AUDIO AINDA NAO VALIDADO NO CONSOLE",106,239,11)
         return
     end
+    -- Fixed orientation, closer framing follows position rather than heading.
+    camera.x,camera.z=player.x+4,player.z-7
     R.begin(camera)
     -- Ground is entirely below every actor: finish it before sorting props.
     -- Average-depth sorting mixed wide floor tiles over legs at some positions.
@@ -140,6 +142,7 @@ function Game.draw()
         text("B OU Y: TENTAR NOVAMENTE",141,138,9)
     end
 end
+
 
 
 

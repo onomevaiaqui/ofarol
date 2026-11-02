@@ -11,7 +11,7 @@ local count=0
 ui={btn=function(k) return buttons[k] or 0 end,stat=function() return 24 end,
     palset=function(i,c) if palette then palette:write(i,",",c,"\n") end end,
     rectfill=function(a,b,c,d,e) if output then output:write(string.format("rect,%d,%d,%d,%d,%d\n",a,b,c,d,e)) end end,
-    print=function(s,x,y,c) if output then output:write(string.format("text,%d,%d,%d,%s\n",x,y,c,s)) end end,
+    print=function(s,x,y,c) s=s:gsub("^FPS %d+ TRI","PC TRI");if output then output:write(string.format("text,%d,%d,%d,%s\n",x,y,c,s)) end end,
     trisfill=function(a,b,c,d,e,f,k)
         for _,n in ipairs({a,b,c,d,e,f,k}) do assert(n==math.floor(n),"non integer") end
         assert(a>=0 and a<=479 and c>=0 and c<=479 and e>=0 and e<=479)
@@ -36,6 +36,10 @@ local function snapshot(name,draw)
 end
 snapshot("menu");tap(BTN_Z);assert(Game.state=="play")
 snapshot("room")
+-- This is the normal gameplay camera; only actor positions set for the scene.
+player.x,player.z=0,-0.8;enemy.x,enemy.z=1,1.8
+Game.step(1/24);snapshot("encounter")
+Game.start()
 local max=0
 for i=1,240 do buttons[RIGHT]=1;Game.step(1/24);Game.draw();max=math.max(max,Game.triangles);assert(require("renderer").dropped==0) end
 buttons={}
@@ -60,7 +64,10 @@ renderer.submit,renderer.flush=rawSubmit,rawFlush
 local Models=require "models";local rig=Models.actor(false)
 for i=1,80 do Models.animate(rig,0.04);for j=2,#rig.mesh.v,3 do assert(rig.mesh.v[j]>=0,"vertex below floor") end end
 for x=-3,3,1.5 do for z=-4,4,2 do for yaw=0,5 do
-    player.x,player.z,player.yaw=x,z,yaw;Game.draw()
+        player.x,player.z,player.yaw=x,z,yaw;Game.draw()
+    local low,high=10000,-10000
+    for _,y in ipairs(player.sy) do low=math.min(low,y);high=math.max(high,y) end
+    assert(high-low>=45 and high-low<=120,"gameplay silhouette size")
     max=math.max(max,Game.triangles);assert(require("renderer").dropped==0,"pool overflow")
 end end end
 Game.start();player.x,player.z=-2.7,3.5;tap(BTN_G);assert(Game.key,"key")
@@ -82,6 +89,7 @@ snapshot("mask-detail",function()
 end)
 print("PASS: restricted loader, clipping, winding, rotation, key, exit, stun, damage, restart, collision")
 print("Peak native triangles in sampled fixed view: "..max)
+
 
 
 
