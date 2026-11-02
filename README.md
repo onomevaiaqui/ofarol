@@ -1,6 +1,6 @@
 # Ultima Saida - survival horror 3D para Lupi
 
-Prototipo 0.8 independente do jogo de corrida. Um beco urbano pre-renderizado, um personagem 3D, um inimigo 3D, uma chave e uma porta de fuga. Camera fixa, alinhada ao render do cenario. Personagens XYZ projetados em perspectiva com ui.trisfill; fundo e mascara desenhados como bitmaps. Texturas e sombras do cenario sao calculadas offline.
+Prototipo 0.9 independente do jogo de corrida. Um beco urbano pre-renderizado, um personagem 3D, um inimigo 3D, uma chave e uma porta de fuga. Camera fixa, alinhada ao render do cenario. Personagens XYZ projetados em perspectiva com ui.trisfill; fundo e mascara desenhados como bitmaps. Texturas e sombras do cenario sao calculadas offline.
 
 ## Como jogar
 
@@ -103,3 +103,7 @@ Background e mascara somam 105186 bytes de pixels indexados, sem contar Lua, cac
 Publicacao: o GitHub contem PNGs e codigo-fonte; o catalogo precisa converter PNGs e fornecer Sprites.backgrounds.alley/dumpster. Se nao fornecer, aparece FUNDO NAO IMPORTADO. O pacote compilado alternativo inclui imagens ja indexadas e lupi_manifest.txt com metadados bitmap, seguindo o formato do simulador publico. Execute python tools/build-prerender.py para gera-lo. Nao envie a pasta .build ao repositorio.
 
 Audio: mesmos sete .fur e modulo da 0.7; reproducao no console continua nao confirmada. FPS do novo modo hibrido ainda nao medido no aparelho. O esqueleto original sozinho continua caro; os picos locais nao sao promessa de FPS.
+
+## Versao 0.9 - identificacao e republicacao
+
+Mesmo beco da 0.8, com nova versao no lupi.yaml, game.lua de entrada explicitamente atualizado e identificacao BECO PRE-RENDER - VERSAO 0.9 no menu / BECO 0.9 durante a partida. Isso permite verificar se o console realmente recebeu os novos arquivos. A 0.8 foi confirmada no GitHub, mas o processamento pelo catalogo nao pode ser confirmado pelo agente; a alteracao nao prova uma causa nem garante invalidacao do cache do servico.
