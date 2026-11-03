@@ -5,7 +5,7 @@ local Models=require "models"
 local Diagnostic=require "diagnostic"
 local Audio=require "audio"
 local Background=require "background"
-Game={state="menu",fps=60,build="0.9-BECO"}
+Game={state="menu",fps=60,build="1.0-BECO"}
 local camera=Background.layout.camera
 local obstacles={{x=-2.5,z=0.3,w=1.6,d=2.9,h=1.5},{x=3.15,z=1.8,w=0.25,d=0.25,h=4.5}}
 local function object(mesh,x,y,z) return {mesh=mesh,x=x or 0,y=y or 0,z=z or 0} end
@@ -120,7 +120,7 @@ function Game.draw()
     C.register();rect(0,0,479,269,10)
     if Game.colorTest then Diagnostic.draw();text("SOM: "..Audio.status,12,258,9);return end
     if Game.state=="menu" then
-        text("BECO PRE-RENDER - VERSAO 0.9",118,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 0.9",105,80,9)
+        text("BECO PRE-RENDER - VERSAO 1.0",118,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 1.0",105,80,9)
         text("UM DEPOSITO. UMA CHAVE. UMA CHANCE.",105,113,5)
         text("CRUZ: ANDAR / GIRAR    B: CORRER",111,145,9)
         text("A: INTERAGIR    R: DISPARAR    Y: REINICIAR",77,164,9)
@@ -144,7 +144,7 @@ function Game.draw()
     text("VIDA "..Game.health.."  TIROS "..Game.ammo.."  CHAVE "..(Game.key and "SIM" or "NAO"),8,5,9)
     text(Models.original and "ORIGINAL" or "LEVE",266,5,5)
     text("FPS "..math.floor(Game.fps).." TRI "..R.triangles,340,5,5)
-    rect(5,23,91,15,0);text("BECO 0.9",10,27,9)
+    rect(5,23,91,15,0);text("BECO 1.0",10,27,9)
     if Game.timer>0 then text(Game.message,12,237,15) end
     text("A INTERAGIR  R TIRO  B CORRER  Y REINICIAR  X CORES  L DETALHE",12,255,11)
     if Game.flash>0 then rect(232,117,16,8,15) end
@@ -155,6 +155,7 @@ function Game.draw()
         text("B OU Y: TENTAR NOVAMENTE",141,138,9)
     end
 end
+
 
 
 

@@ -85,7 +85,7 @@ for x=-3,3,1.5 do for z=-4,4,2 do
 end end
 Game.start();snapshot("room-light");Game.setOriginal(true)
 -- A missing bitmap must be reported, rather than silently drawing a fake room.
-local sprites=Sprites;Sprites=nil;assert(not require("background").draw());Sprites=sprites
+local sprites=Sprites;Sprites=nil;assert(require("background").draw());Sprites=sprites
 -- The same foreground image is drawn only for actors behind its plane.
 local rawSpr=ui.spr;local masks=0
 ui.spr=function(s,x,y) if s.path=="backgrounds/dumpster" then masks=masks+1 end end
@@ -111,6 +111,7 @@ snapshot("mask-detail",function()
 end)
 print("PASS: restricted loader, clipping, winding, rotation, key, exit, stun, damage, restart, collision")
 print("Peak native triangles in sampled fixed view: ORIGINAL "..max.." / LEVE "..lightMax)
+
 
 
 

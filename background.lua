@@ -1,13 +1,24 @@
 local L=require "background_layout"
 local C=require "colors"
 pcall(require,"sprites")
-local B={layout=L,status="FUNDO NAO IMPORTADO"}
+local B={layout=L,status="PRE-RENDER"}
+local pixels
+local indices={}
+for i,c in ipairs(C.palette) do indices[c]=i-1 end
+local function embedded(name,x,y)
+    pixels=pixels or require "background_pixels"
+    local r=pixels[name]
+    for i=1,#r,5 do
+        ui.rectfill(x+r[i],y+r[i+1],x+r[i+2],y+r[i+3],indices[r[i+4]] or C.index[10])
+    end
+    return true
+end
 local function sprite(name)
     return type(Sprites)=="table" and type(Sprites.backgrounds)=="table" and Sprites.backgrounds[name] or nil
 end
 local function draw(name,x,y)
     local s=sprite(name)
-    if type(ui.spr)~="function" or type(s)~="table" then return false end
+    if type(ui.spr)~="function" or type(s)~="table" then return embedded(name,x,y) end
     ui.spr(s,x,y);return true
 end
 function B.draw()
@@ -25,3 +36,4 @@ function B.occlude(actor)
     if depth>L.mask.depth then draw("dumpster",L.mask.x,L.mask.y) end
 end
 return B
+

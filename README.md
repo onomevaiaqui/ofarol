@@ -107,3 +107,7 @@ Audio: mesmos sete .fur e modulo da 0.7; reproducao no console continua nao conf
 ## Versao 0.9 - identificacao e republicacao
 
 Mesmo beco da 0.8, com nova versao no lupi.yaml, game.lua de entrada explicitamente atualizado e identificacao BECO PRE-RENDER - VERSAO 0.9 no menu / BECO 0.9 durante a partida. Isso permite verificar se o console realmente recebeu os novos arquivos. A 0.8 foi confirmada no GitHub, mas o processamento pelo catalogo nao pode ser confirmado pelo agente; a alteracao nao prova uma causa nem garante invalidacao do cache do servico.
+
+## Versao 1.0
+
+O fundo e a mascara pre-renderizados tem uma copia reduzida em background_pixels.lua. Se o catalogo nao fornecer os sprites, a copia e desenhada com ui.rectfill. Esse caminho tem menor resolucao e seu custo no console ainda nao foi medido. Regenere com python tools/embed-background.py a partir da raiz.
