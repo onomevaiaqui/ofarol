@@ -4,15 +4,15 @@ local C=require "colors"
 local Models=require "models"
 local Diagnostic=require "diagnostic"
 local Audio=require "audio"
-local Alley=require "alley"
-Game={state="menu",fps=60,build="1.3-BECO"}
-local camera={x=6,y=6,z=-10,yaw=-0.5404195002705842,pitch=-0.42656599364032893}
-local obstacles={{x=-2.5,z=0.3,w=1.6,d=2.9,h=1.5},{x=3.15,z=1.8,w=0.25,d=0.25,h=4.5}}
+local Rooms=require "mansion"
+Game={state="menu",fps=60,build="1.4-MANSAO",room=1}
+local passage={x=3,z=4.65}
+local exit={x=0,z=4.65}
 local function object(mesh,x,y,z) return {mesh=mesh,x=x or 0,y=y or 0,z=z or 0} end
 local function box(w,h,d,x,y,z,a,b,c)
     return object(G.box(w,h,d,a or 3,b or 2,c or 4),x,y,z)
 end
-local door={x=3,y=0,z=4.7}
+
 local key=box(0.36,0.15,0.2,-2.7,0.35,3.5,8,13,15)
 local playerRig=Models.actor(false)
 local enemyRig=Models.actor(true)
@@ -34,7 +34,7 @@ end
 local function dist(a,b) local x,z=a.x-b.x,a.z-b.z;return math.sqrt(x*x+z*z) end
 local function blocked(x,z)
     if x< -3.7 or x>3.7 or z< -4.7 or z>4.7 then return true end
-    for _,b in ipairs(obstacles) do if math.abs(x-b.x)<b.w/2+0.25 and math.abs(z-b.z)<b.d/2+0.25 then return true end end
+    for _,b in ipairs(Rooms[Game.room].obstacles) do if math.abs(x-b.x)<b.w/2+0.25 and math.abs(z-b.z)<b.d/2+0.25 then return true end end
     return false
 end
 local function move(o,x,z)
@@ -44,7 +44,7 @@ local function move(o,x,z)
     local dx,dz=o.x-oldx,o.z-oldz;return math.sqrt(dx*dx+dz*dz)
 end
 function Game.start()
-    Game.state="play";Game.health=3;Game.ammo=3;Game.key=false;Game.message="ENCONTRE A CHAVE E A SAIDA";Game.timer=3
+    Game.room=1;Game.state="play";Game.health=3;Game.ammo=3;Game.key=false;Game.message="A NA PORTA DE MADEIRA: BIBLIOTECA";Game.timer=3
     Game.invulnerable=0;Game.stun=0;Game.flash=0
     player.x,player.z,player.yaw=0,-3.5,0
     enemy.x,enemy.z,enemy.yaw=2,2.8,math.pi
@@ -75,33 +75,39 @@ function Game.step(dt)
         local walked=move(player,math.sin(player.yaw)*amount,math.cos(player.yaw)*amount)
         Models.animate(playerRig,walked)
         if pressed("act") then
-            if not Game.key and dist(player,key)<1.2 then Game.key=true;Audio.event("pickup");message("CHAVE ENCONTRADA - PROCURE A PORTA DE MADEIRA")
-            elseif dist(player,door)<1.2 then
+            if dist(player,passage)<1.2 then
+                Game.room=3-Game.room
+                player.x,player.z,player.yaw=3,3.25,math.pi
+                message(Rooms[Game.room].name)
+                previous=now
+                return
+            elseif Game.room==2 and not Game.key and dist(player,key)<1.2 then Game.key=true;Audio.event("pickup");message("CHAVE ENCONTRADA - VOLTE PARA A SAIDA NO HALL")
+            elseif Game.room==1 and dist(player,exit)<1.2 then
                 if Game.key then Game.state="win";Audio.event("win") else message("PORTA TRANCADA - PRECISA DE CHAVE") end
             else message("NADA AO ALCANCE") end
         end
         if pressed("fire") then
             if Game.ammo>0 then
                 Game.ammo=Game.ammo-1;Game.flash=0.12;Audio.event("shot")
-                local d=dist(player,enemy)
+                local d=Game.room==2 and dist(player,enemy) or math.huge
                 local dot=(enemy.x-player.x)*math.sin(player.yaw)+(enemy.z-player.z)*math.cos(player.yaw)
                 -- Line of sight: crates stop both the enemy and the shot.
                 local clear=true
-                if d>0.001 then for _,b in ipairs(obstacles) do
+                if d<math.huge and d>0.001 then for _,b in ipairs(Rooms[Game.room].obstacles) do
                     if G.rayBox({minx=b.x-b.w/2,maxx=b.x+b.w/2,miny=0,maxy=b.h or 0.85,minz=b.z-b.d/2,maxz=b.z+b.d/2},player.x,0.7,player.z,(enemy.x-player.x)/d,0,(enemy.z-player.z)/d,d) then clear=false end
                 end end
                 if d<4.5 and dot>math.max(0,d*0.85) and clear then Game.stun=3;message("INIMIGO ATORDOADO - CORRA!") else message("DISPARO") end
             else message("SEM MUNICAO") end
         end
-        local d=dist(player,enemy)
+        local d=Game.room==2 and dist(player,enemy) or math.huge
         local ex,ez=enemy.x,enemy.z
-        if Game.stun==0 and d>0.001 then
+        if Game.room==2 and Game.stun==0 and d>0.001 then
             local dx,dz=(player.x-enemy.x)/d,(player.z-enemy.z)/d
             enemy.yaw=math.atan(dx,dz)
             if d<5.8 then move(enemy,dx*0.85*dt,dz*0.85*dt)
             else move(enemy,math.sin(tick*0.01)*0.3*dt,0) end
         end
-        Models.animate(enemyRig,math.sqrt((enemy.x-ex)^2+(enemy.z-ez)^2),Game.stun>0)
+        if Game.room==2 then Models.animate(enemyRig,math.sqrt((enemy.x-ex)^2+(enemy.z-ez)^2),Game.stun>0) end
         if d<0.62 and Game.stun==0 and Game.invulnerable==0 then
             Game.health=Game.health-1;Audio.event("hit");Game.invulnerable=1.8;message("FERIDO! AFASTE-SE")
             if Game.health<=0 then Game.state="dead";Audio.event("lose") end
@@ -117,8 +123,8 @@ function Game.draw()
     C.register();rect(0,0,479,269,10)
     if Game.colorTest then Diagnostic.draw();text("SOM: "..Audio.status,12,258,9);return end
     if Game.state=="menu" then
-        text("BECO 3D LUA - VERSAO 1.3",118,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 1.3",105,80,9)
-        text("UM DEPOSITO. UMA CHAVE. UMA CHANCE.",105,113,5)
+        text("MANSAO 3D LUA - VERSAO 1.4",118,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 1.4",105,80,9)
+        text("DUAS SALAS. UMA CHAVE. UMA CHANCE.",105,113,5)
         text("CRUZ: ANDAR / GIRAR    B: CORRER",111,145,9)
         text("A: INTERAGIR    R: DISPARAR    Y: REINICIAR",77,164,9)
         text("B: INICIAR",203,200,15)
@@ -126,12 +132,17 @@ function Game.draw()
         text("SOM: "..Audio.status,65,248,11)
         return
     end
-    R.begin(camera)
-    R.submit(Alley.floor)
+    local room=Rooms[Game.room]
+    R.begin(room.camera)
+    R.submit(room.floor)
     R.flush()
-    for _,object in ipairs(Alley.objects) do R.submit(object) end
-    if not Game.key then R.submit(key) end
-    R.submit(enemy)
+    R.submit(room.rug)
+    R.flush()
+    for _,wall in ipairs(room.walls) do R.submit(wall) end
+    R.flush()
+    for _,object in ipairs(room.objects) do R.submit(object) end
+    if Game.room==2 and not Game.key then R.submit(key) end
+    if Game.room==2 then R.submit(enemy) end
     if Game.invulnerable==0 or tick%4<2 then R.submit(player) end
     R.flush()
     Game.triangles=R.triangles
@@ -139,7 +150,7 @@ function Game.draw()
     text("VIDA "..Game.health.."  TIROS "..Game.ammo.."  CHAVE "..(Game.key and "SIM" or "NAO"),8,5,9)
     text(Models.original and "ORIGINAL" or "LEVE",266,5,5)
     text("FPS "..math.floor(Game.fps).." TRI "..R.triangles,340,5,5)
-    rect(5,23,91,15,0);text("BECO 1.3",10,27,9)
+    rect(5,23,120,15,0);text(Rooms[Game.room].name.." 1.4",10,27,9)
     if Game.timer>0 then text(Game.message,12,237,15) end
     text("A INTERAGIR  R TIRO  B CORRER  Y REINICIAR  X CORES  L DETALHE",12,255,11)
     if Game.flash>0 then rect(232,117,16,8,15) end

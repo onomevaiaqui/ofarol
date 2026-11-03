@@ -29,7 +29,7 @@ local function find(fn,name)
 end
 local player=find(Game.step,"player");local enemy=find(Game.step,"enemy")
 assert(player and enemy)
-local camera=find(Game.draw,"camera")
+local rooms=require "mansion"
 local open=io.open
 package,io,os,debug,collectgarbage,sfx,music=nil,nil,nil,nil,nil,nil,nil
 local function tap(k) buttons[k]=1;Game.step(1/24);buttons[k]=0;Game.step(1/24) end
@@ -70,11 +70,27 @@ for x=-3,3,1.5 do for z=-4,4,2 do
     player.x,player.z=x,z;Game.draw();lightMax=math.max(lightMax,Game.triangles);assert(renderer.dropped==0)
 end end
 Game.start();snapshot("room-light");Game.setOriginal(true)
-Game.start();player.x,player.z=-2.7,3.5;tap(BTN_G);assert(Game.key,"key")
-player.x,player.z=2.5,4.3;tap(BTN_G);assert(Game.state=="win","escape");snapshot("escape")
-Game.start();player.x,player.z=0,-2;player.yaw=0;enemy.x,enemy.z=0,0
+Game.start()
+player.x,player.z=3,4
+tap(BTN_G)
+assert(Game.room==2 and Game.state=="play","enter library")
+assert(rooms[1].camera.yaw~=rooms[2].camera.yaw,"camera angle must change")
+Game.setOriginal(false)
+enemy.x,enemy.z=0,1.5
+snapshot("library")
+for x=-3,3,1.5 do for z=-4,4,2 do
+    player.x,player.z=x,z
+    Game.draw()
+    lightMax=math.max(lightMax,Game.triangles)
+    assert(renderer.dropped==0)
+end end
+player.x,player.z=-2.7,3.5;tap(BTN_G);assert(Game.key,"key")
+player.x,player.z=3,4;tap(BTN_G)
+assert(Game.room==1 and Game.key,"return to hall with key")
+player.x,player.z=0,4.3;tap(BTN_G);assert(Game.state=="win","escape");snapshot("escape")
+Game.start();Game.room=2;player.x,player.z=0,-2;player.yaw=0;enemy.x,enemy.z=0,0
 tap(BTN_E);assert(Game.ammo==2 and Game.stun>0,"shot stun")
-Game.start();enemy.x,enemy.z=player.x,player.z;Game.step(0.05);assert(Game.health==2,"damage")
+Game.start();Game.room=2;enemy.x,enemy.z=player.x,player.z;Game.step(0.05);assert(Game.health==2,"damage")
 for i=1,3 do Game.invulnerable=0;enemy.x,enemy.z=player.x,player.z;Game.step(0.05) end
 assert(Game.state=="dead");tap(BTN_F);assert(Game.state=="play" and Game.health==3)
 Game.start();player.x,player.z=-2.5,-2.1;player.yaw=0;buttons[UP]=1
@@ -89,19 +105,3 @@ snapshot("mask-detail",function()
 end)
 print("PASS: restricted loader, clipping, winding, rotation, key, exit, stun, damage, restart, collision")
 print("Peak native triangles in sampled fixed view: ORIGINAL "..max.." / LEVE "..lightMax)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
