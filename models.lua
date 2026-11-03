@@ -1,7 +1,7 @@
 -- Real itch.io meshes converted offline. No FBX/GLB loader runs on the console.
 local Data=require "asset_meshes"
 local Full=require "asset_meshes_full"
-local M={original=true}
+local M={original=false}
 function M.prop(name) return (M.original and Full or Data)[name] end
 function M.actor(infected)
     local source=(M.original and Full or Data)[infected and "enemy" or "player"]
@@ -34,5 +34,6 @@ function M.animate(rig,distance,stunned)
     if minimum<0 then for i=2,#rig.mesh.v,3 do rig.mesh.v[i]=rig.mesh.v[i]-minimum end end
 end
 return M
+
 
 

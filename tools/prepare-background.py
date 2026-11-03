@@ -6,7 +6,7 @@ base=[int(x) for x in (build/'source-palette.txt').read_text().split()]
 def rgb(c): return ((c&31)*255//31,((c>>5)&31)*255//31,((c>>10)&31)*255//31)
 def pack(c):return (int(c[2])>>3)*1024+(int(c[1])>>3)*32+(int(c[0])>>3)
 original=Image.open(build/'alley-rgba.png').convert('RGB')
-quant=original.quantize(colors=176,method=Image.Quantize.MEDIANCUT,dither=Image.Dither.NONE).convert('RGB')
+quant=original.quantize(colors=64,method=Image.Quantize.MEDIANCUT,dither=Image.Dither.NONE).convert('RGB')
 values=[max(1,pack(c)) for c in quant.getdata()];master=list(dict.fromkeys([0]+base+values));assert len(master)<=256
 pixels=[rgb(c) for c in values];quant.putdata(pixels);quant.save(dest/'alley.png')
 a=Image.open(build/'dumpster-rgba.png').getchannel('A');bbox=a.point(lambda x:255 if x>=128 else 0).getbbox();mask=Image.new('RGBA',quant.size);mask.putdata([(*c,255 if alpha>=128 else 0) for c,alpha in zip(pixels,a.getdata())]);mask.crop(bbox).save(dest/'dumpster.png')
@@ -23,5 +23,6 @@ text='return {camera={'+','.join(k+'='+repr(v) for k,v in cam.items())+'},mask={
 (root/'background_layout.lua').write_text(text)
 (build/'palette.json').write_text(json.dumps(master));(build/'layout-complete.json').write_text(json.dumps(layout|{'bbox':bbox,'palette_size':len(master)},indent=2))
 print('palette',len(master),'background bytes',len(values),'mask',bbox,'mask bytes',len(maskvals))
+
 
 

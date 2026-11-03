@@ -40,7 +40,7 @@ local function snapshot(name,draw)
     output=assert(open(root.."/tools/"..name..".csv","w"));palette=assert(open(root.."/tools/palette.csv","w"))
     local callback=draw or Game.draw;callback();output:close();palette:close();output=nil;palette=nil
 end
-snapshot("menu");tap(BTN_Q);assert(#player.mesh.f/4==180);tap(BTN_Q);assert(#player.mesh.f/4==402);tap(BTN_X);assert(Game.colorTest);snapshot("color-test");tap(BTN_X);assert(not Game.colorTest);tap(BTN_Z);assert(Game.state=="play")
+snapshot("menu");assert(#player.mesh.f/4==180);tap(BTN_Q);assert(#player.mesh.f/4==402);tap(BTN_X);assert(Game.colorTest);snapshot("color-test");tap(BTN_X);assert(not Game.colorTest);tap(BTN_Z);assert(Game.state=="play")
 snapshot("room")
 -- This is the normal gameplay camera; only actor positions set for the scene.
 player.x,player.z=0,-0.8;enemy.x,enemy.z=1,1.8
@@ -111,6 +111,7 @@ snapshot("mask-detail",function()
 end)
 print("PASS: restricted loader, clipping, winding, rotation, key, exit, stun, damage, restart, collision")
 print("Peak native triangles in sampled fixed view: ORIGINAL "..max.." / LEVE "..lightMax)
+
 
 
 
