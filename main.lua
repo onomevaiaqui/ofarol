@@ -4,9 +4,9 @@ local C=require "colors"
 local Models=require "models"
 local Diagnostic=require "diagnostic"
 local Audio=require "audio"
-local Background=require "background"
-Game={state="menu",fps=60,build="1.1-BECO"}
-local camera=Background.layout.camera
+local Alley=require "alley"
+Game={state="menu",fps=60,build="1.2-BECO"}
+local camera={x=6,y=6,z=-10,yaw=-0.5404195002705842,pitch=-0.42656599364032893}
 local obstacles={{x=-2.5,z=0.3,w=1.6,d=2.9,h=1.5},{x=3.15,z=1.8,w=0.25,d=0.25,h=4.5}}
 local function object(mesh,x,y,z) return {mesh=mesh,x=x or 0,y=y or 0,z=z or 0} end
 local function box(w,h,d,x,y,z,a,b,c)
@@ -75,7 +75,7 @@ function Game.step(dt)
         local walked=move(player,math.sin(player.yaw)*amount,math.cos(player.yaw)*amount)
         Models.animate(playerRig,walked)
         if pressed("act") then
-            if not Game.key and dist(player,key)<1.1 then Game.key=true;Audio.event("pickup");message("CHAVE ENCONTRADA - PROCURE A PORTA VERDE")
+            if not Game.key and dist(player,key)<1.2 then Game.key=true;Audio.event("pickup");message("CHAVE ENCONTRADA - PROCURE A PORTA VERDE")
             elseif dist(player,door)<1.2 then
                 if Game.key then Game.state="win";Audio.event("win") else message("PORTA TRANCADA - PRECISA DE CHAVE") end
             else message("NADA AO ALCANCE") end
@@ -111,16 +111,13 @@ function Game.step(dt)
 end
 local function text(s,x,y,c) ui.print(s,x,y,C.index[c or 9]) end
 local function rect(x,y,w,h,c) ui.rectfill(x,y,x+w,y+h,C.index[c]) end
-local function drawActor(o)
-    if o~=player or Game.invulnerable==0 or tick%4<2 then R.submit(o);R.flush();Background.occlude(o) end
-end
 function Game.draw()
     if type(ui.camera)=="function" then ui.camera(0,0) end
     if type(ui.clip)=="function" then ui.clip(0,0,480,270) end
     C.register();rect(0,0,479,269,10)
     if Game.colorTest then Diagnostic.draw();text("SOM: "..Audio.status,12,258,9);return end
     if Game.state=="menu" then
-        text("BECO PRE-RENDER - VERSAO 1.1",118,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 1.1",105,80,9)
+        text("BECO 3D LUA - VERSAO 1.2",118,52,15);text("SURVIVAL HORROR 3D - PROTOTIPO 1.2",105,80,9)
         text("UM DEPOSITO. UMA CHAVE. UMA CHANCE.",105,113,5)
         text("CRUZ: ANDAR / GIRAR    B: CORRER",111,145,9)
         text("A: INTERAGIR    R: DISPARAR    Y: REINICIAR",77,164,9)
@@ -130,21 +127,19 @@ function Game.draw()
         return
     end
     R.begin(camera)
-    if Background.draw() then
-        if not Game.key then R.submit(key);R.flush();Background.occlude(key) end
-        -- Draw actors far-to-near; each may be behind the pre-rendered dumpster.
-        local cy,sy=math.cos(camera.yaw),math.sin(camera.yaw)
-        local pd=(player.x-camera.x)*sy+(player.z-camera.z)*cy
-        local ed=(enemy.x-camera.x)*sy+(enemy.z-camera.z)*cy
-        local first,second=player,enemy;if ed>pd then first,second=enemy,player end
-        drawActor(first);drawActor(second)
-    end
+    R.submit(Alley.floor)
+    R.flush()
+    for _,object in ipairs(Alley.objects) do R.submit(object) end
+    if not Game.key then R.submit(key) end
+    R.submit(enemy)
+    if Game.invulnerable==0 or tick%4<2 then R.submit(player) end
+    R.flush()
     Game.triangles=R.triangles
     rect(0,0,479,19,0);rect(0,228,479,41,0)
     text("VIDA "..Game.health.."  TIROS "..Game.ammo.."  CHAVE "..(Game.key and "SIM" or "NAO"),8,5,9)
     text(Models.original and "ORIGINAL" or "LEVE",266,5,5)
     text("FPS "..math.floor(Game.fps).." TRI "..R.triangles,340,5,5)
-    rect(5,23,91,15,0);text("BECO 1.1",10,27,9)
+    rect(5,23,91,15,0);text("BECO 1.2",10,27,9)
     if Game.timer>0 then text(Game.message,12,237,15) end
     text("A INTERAGIR  R TIRO  B CORRER  Y REINICIAR  X CORES  L DETALHE",12,255,11)
     if Game.flash>0 then rect(232,117,16,8,15) end
@@ -155,6 +150,7 @@ function Game.draw()
         text("B OU Y: TENTAR NOVAMENTE",141,138,9)
     end
 end
+
 
 
 

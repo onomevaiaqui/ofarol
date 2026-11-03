@@ -2,13 +2,10 @@
 local root=arg[1] or "."
 local cache={}
 function require(name)
-    if name=="sprites" then return Sprites end
     if cache[name] then return cache[name] end
     local f=assert(loadfile(root.."/"..name..".lua"));local v=f();cache[name]=v or true;return cache[name]
 end
 UP,DOWN,LEFT,RIGHT,BTN_Z,BTN_G,BTN_E,BTN_F,BTN_X,BTN_Q=1,2,3,4,5,6,7,8,9,10
-local layout=assert(loadfile(root.."/background_layout.lua"))()
-Sprites={backgrounds={alley={path="backgrounds/alley",width=480,height=208},dumpster={path="backgrounds/dumpster",width=layout.mask.width,height=layout.mask.height}}}
 local buttons={};local output,palette
 local count=0
 ui={spr=function(s,x,y)
@@ -58,17 +55,6 @@ assert(not changed,"original mesh must not be deformed")
 Game.setOriginal(false);local original=player.mesh.v[1];buttons[UP]=1;Game.step(1/24);buttons={};assert(#player.mesh.f/4==180);Game.setOriginal(true);assert(#player.mesh.f/4==402)
 snapshot("walking")
 local renderer=require "renderer"
-local nativeCount=count;assert(require("background").draw());assert(count==nativeCount,"background must not issue triangles")
-local cam=layout.camera
-for _,p in ipairs(layout.probes) do
-    local dx,dy,dz=p[1]-cam.x,p[2]-cam.y,p[3]-cam.z
-    local forward=dx*math.sin(cam.yaw)+dz*math.cos(cam.yaw)
-    local side=dx*math.cos(cam.yaw)-dz*math.sin(cam.yaw)
-    local height=dy*math.cos(cam.pitch)-forward*math.sin(cam.pitch)
-    local depth=dy*math.sin(cam.pitch)+forward*math.cos(cam.pitch)
-    assert(math.abs(240+side*380/depth-p[4])<0.1,"background camera x mismatch")
-    assert(math.abs(124-height*380/depth-p[5])<0.1,"background camera y mismatch")
-end
 -- Feet must remain above ground for a full stride, not just the rest pose.
 local Models=require "models";local rig=Models.actor(false)
 for i=1,80 do Models.animate(rig,0.04);for j=2,#rig.mesh.v,3 do assert(rig.mesh.v[j]>=0,"vertex below floor") end end
@@ -84,14 +70,6 @@ for x=-3,3,1.5 do for z=-4,4,2 do
     player.x,player.z=x,z;Game.draw();lightMax=math.max(lightMax,Game.triangles);assert(renderer.dropped==0)
 end end
 Game.start();snapshot("room-light");Game.setOriginal(true)
--- A missing bitmap must be reported, rather than silently drawing a fake room.
-local sprites=Sprites;Sprites=nil;assert(require("background").draw());Sprites=sprites
--- The same foreground image is drawn only for actors behind its plane.
-local rawSpr=ui.spr;local masks=0
-ui.spr=function(s,x,y) if s.path=="backgrounds/dumpster" then masks=masks+1 end end
-require("background").occlude({x=0,z=-4});assert(masks==0)
-require("background").occlude({x=-2.5,z=3});assert(masks==1)
-ui.spr=rawSpr
 Game.start();player.x,player.z=-2.7,3.5;tap(BTN_G);assert(Game.key,"key")
 player.x,player.z=2.5,4.3;tap(BTN_G);assert(Game.state=="win","escape");snapshot("escape")
 Game.start();player.x,player.z=0,-2;player.yaw=0;enemy.x,enemy.z=0,0
@@ -111,6 +89,7 @@ snapshot("mask-detail",function()
 end)
 print("PASS: restricted loader, clipping, winding, rotation, key, exit, stun, damage, restart, collision")
 print("Peak native triangles in sampled fixed view: ORIGINAL "..max.." / LEVE "..lightMax)
+
 
 
 
