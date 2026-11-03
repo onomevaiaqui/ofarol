@@ -1,0 +1,4 @@
+1 129600 img/rua {"type":"bitmap","width":480,"height":270}
+2 129600 img/parque {"type":"bitmap","width":480,"height":270}
+3 129600 img/casa {"type":"bitmap","width":480,"height":270}
+4 129600 img/interior {"type":"bitmap","width":480,"height":270}
